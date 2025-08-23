@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">🛡️ Hero Collection</div>
+            <div class="user-info">
+                <div class="username">Welcome, {{ current_user.username }}!</div>
+                <div class="tokens">💰 {{ current_user.tokens }} Tokens</div>
+                <div class="homeL"><a href="{{ url_for('home')}}">Home</a></div>
+                <div class="homeL"><a href="{{ url_for('trade')}}">Trade</a></div>
+                <div class="homeL"><a href="{{ url_for('roll')}}">Roll</a></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">Your Dashboard</h1>
+            <p class="dashboard-subtitle">Manage your heroes and roll for new ones</p>
+        </div>
+
+        <!-- Heroes Section -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">⚔️</span>
+                Your Heroes Collection ({{ user_heroes|length }})
+            </h2>
+            
+            {% if user_heroes %}
+                <div class="heroes-grid">
+                    {% for hero in user_heroes[:4] %}
+                        <div class="hero-card {{ hero.rarity.lower() }}">
+                            {% if hero.image %}
+                                <img src="{{ hero.image }}" alt="{{ hero.name }}" class="hero-image">
+                            {% else %}
+                                <div class="hero-image">🛡️</div>
+                            {% endif %}
+                            <div class="hero-info">
+                                <div class="hero-name">{{ hero.name }}</div>
+                                <div class="hero-description">{{ hero.description }}</div>
+                                <span class="hero-rarity rarity-{{ hero.rarity.lower() }}">{{ hero.rarity }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                {% if user_heroes|length > 4 %}
+                    <div class="view-all-heroes">
+                        <a href="{{ url_for('hero_index') }}" class="btn btn-secondary">
+                            📖 Click here to see the full index! ({{ user_heroes|length - 4 }} more heroes)
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="view-all-heroes">
+                        <a href="{{ url_for('hero_index') }}" class="btn btn-secondary">
+                            📖 Click here to see the index!
+                        </a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">⚔️</div>
+                    <h3>No Heroes Yet</h3>
+                    <p>Start collecting heroes to build your legendary team!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Roll Section -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">🎲</span>
+                Roll for Heroes
+            </h2>
+            <div class="roll-section">
+                <p>Ready to expand your collection? Roll for new heroes and discover legendary warriors!</p>
+                <a href="{{ url_for('roll') }}" class="btn btn-roll">🎲 Roll for Heroes</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+</body>
+</html>

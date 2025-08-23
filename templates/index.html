@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Rolling Game - Home</title>
+    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+</head>
+<body>
+    <div class="home-container">
+        <div class="hero-section">
+            <div class="hero-icon">🛡️</div>
+            <h1 class="main-title">Hero Rolling Game</h1>
+            <p class="subtitle">Collect legendary heroes and build your ultimate team!</p>
+        </div>
+
+        <div class="action-cards">
+            {% if current_user.is_authenticated %}
+                <div class="card welcome-back">
+                    <div class="card-icon">👋</div>
+                    <h2>Welcome back, {{ current_user.username }}!</h2>
+                    <p>Ready to continue your adventure?</p>
+                    <a href="{{url_for('dashboard')}}" class="btn btn-primary">Go to Dashboard</a>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-icon">✨</div>
+                    <h2>New to the Game?</h2>
+                    <p>Create your account and start collecting heroes today!</p>
+                    <a href="{{url_for('register')}}" class="btn btn-primary">Register Now</a>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🔑</div>
+                    <h2>Already Have an Account?</h2>
+                    <p>Login to access your hero collection and continue your journey!</p>
+                    <a href="{{url_for('login')}}" class="btn btn-secondary">Login Here</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="features-section">
+            <h3 class="features-title">What Awaits You</h3>
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">⚔️</div>
+                    <h4>Collect Heroes</h4>
+                    <p>Roll for legendary heroes with unique abilities</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🤝</div>
+                    <h4>Trade Heroes</h4>
+                    <p>Exchange heroes with other players</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🏆</div>
+                    <h4>Earn Achievements</h4>
+                    <p>Complete challenges and unlock rewards</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

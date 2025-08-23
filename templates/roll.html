@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roll for Heroes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">🛡️ Hero Collection</div>
+            <div class="user-info">
+                <div class="username">Welcome, {{ current_user.username }}!</div>
+                <div class="tokens">💰 {{ current_user.tokens }} Tokens</div>
+                <div class="homeL"><a href="{{ url_for('home')}}">Home</a></div>
+                <div class="homeL"><a href="{{ url_for('dashboard')}}">Dashboard</a></div>
+                <div class="homeL"><a href="{{ url_for('trade')}}">Trade</a></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="roll-header">
+            <h1 class="roll-title">🎲 Roll for Heroes</h1>
+            <p class="roll-subtitle">Test your luck and expand your legendary collection!</p>
+        </div>
+
+        <div class="roll-section">
+            <h2 style="font-size: 2rem; margin-bottom: 2rem; color: #333;">Choose Your Roll</h2>
+            
+            <div class="roll-options">
+                <!-- Basic Roll -->
+                <div class="roll-option">
+                    <span class="roll-icon">🎯</span>
+                    <div class="roll-type">Basic Roll</div>
+                    <div class="roll-cost">💰 10 Tokens</div>
+                    <div class="roll-description">
+                        A standard roll with balanced chances for all rarities. Perfect for building your collection!
+                    </div>
+                    <div class="rarity-chances">
+                        <div class="rarity-chance legendary-chance">Legendary 5%</div>
+                        <div class="rarity-chance epic-chance">Epic 15%</div>
+                        <div class="rarity-chance rare-chance">Rare 30%</div>
+                        <div class="rarity-chance common-chance">Common 50%</div>
+                    </div>
+                    <form method="POST" action="{{ url_for('perform_roll') }}">
+                        <input type="hidden" name="roll_type" value="basic">
+                        <button type="submit" class="btn-roll" {% if current_user.tokens < 10 %}disabled{% endif %}>
+                            Roll Now
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Premium Roll -->
+                <div class="roll-option">
+                    <span class="roll-icon">⭐</span>
+                    <div class="roll-type">Premium Roll</div>
+                    <div class="roll-cost">💰 25 Tokens</div>
+                    <div class="roll-description">
+                        Enhanced chances for rare and epic heroes. Skip the commons and aim higher!
+                    </div>
+                    <div class="rarity-chances">
+                        <div class="rarity-chance legendary-chance">Legendary 10%</div>
+                        <div class="rarity-chance epic-chance">Epic 25%</div>
+                        <div class="rarity-chance rare-chance">Rare 45%</div>
+                        <div class="rarity-chance common-chance">Common 20%</div>
+                    </div>
+                    <form method="POST" action="{{ url_for('perform_roll') }}">
+                        <input type="hidden" name="roll_type" value="premium">
+                        <button type="submit" class="btn-roll" {% if current_user.tokens < 25 %}disabled{% endif %}>
+                            Roll Now
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Legendary Roll -->
+                <div class="roll-option">
+                    <span class="roll-icon">💎</span>
+                    <div class="roll-type">Legendary Roll</div>
+                    <div class="roll-cost">💰 50 Tokens</div>
+                    <div class="roll-description">
+                        Maximum chances for legendary heroes! For the ultimate collectors seeking the best.
+                    </div>
+                    <div class="rarity-chances">
+                        <div class="rarity-chance legendary-chance">Legendary 25%</div>
+                        <div class="rarity-chance epic-chance">Epic 35%</div>
+                        <div class="rarity-chance rare-chance">Rare 35%</div>
+                        <div class="rarity-chance common-chance">Common 5%</div>
+                    </div>
+                    <form method="POST" action="{{ url_for('perform_roll') }}">
+                        <input type="hidden" name="roll_type" value="legendary">
+                        <button type="submit" class="btn-roll" {% if current_user.tokens < 50 %}disabled{% endif %}>
+                            Roll Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Roll Result Section (Hidden by default) -->
+            {% if rolled_hero %}
+            <div class="roll-result show">
+                <div class="result-title">🎉 Congratulations!</div>
+                <p style="color: #666; margin-bottom: 1.5rem;">You rolled a new hero!</p>
+                
+                <div class="rolled-hero {{ rolled_hero.rarity.lower() }}">
+                    <div class="hero-image-placeholder">🛡️</div>
+                    <div class="hero-name">{{ rolled_hero.name }}</div>
+                    <div class="hero-description" style="color: #666; margin: 0.5rem 0;">{{ rolled_hero.description }}</div>
+                    <span class="hero-rarity rarity-{{ rolled_hero.rarity.lower() }}">{{ rolled_hero.rarity }}</span>
+                </div>
+                
+                <a href="{{ url_for('dashboard') }}" class="btn-secondary">View in Collection</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div style="position: fixed; top: 100px; right: 20px; z-index: 1000;">
+                {% for category, message in messages %}
+                    <div>
+                        {{ message }}
+                        <button onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: white; float: right; cursor: pointer; font-size: 1.2rem; margin-left: 1rem;">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+</body>
+</html>

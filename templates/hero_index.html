@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heroes Index</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='heroes-index.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">🛡️ Hero Collection</div>
+            <div class="user-info">
+                <div class="username">Welcome, {{ current_user.username }}!</div>
+                <div class="tokens">💰 {{ current_user.tokens }} Tokens</div>
+                <div class="homeL"><a href="{{ url_for('home')}}">Home</a></div>
+                <div class="homeL"><a href="{{ url_for('trade')}}">Trade</a></div>
+                <div class="homeL"><a href="{{ url_for('roll')}}">Roll</a></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="index-header">
+            <h1 class="index-title">Complete Heroes Index</h1>
+            <div class="collection-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ user_heroes|length }}</span>
+                    <span class="stat-label">Collected</span>
+                </div>
+                <div class="stat-divider">/</div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ all_heroes|length }}</span>
+                    <span class="stat-label">Total Heroes</span>
+                </div>
+            </div>
+            <div class="progress-bar">
+            {% if all_heroes|length > 0 %}
+                <!--<div class="progress-fill" style="width: {{ (user_heroes|length / all_heroes|length * 100)|round(1) }}%"></div> -->
+            {% else %}
+                <div class="progress-fill" style="width: 0%"></div>
+            {% endif %}
+            </div>
+            
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterHeroes('all')">All Heroes</button>
+                <button class="filter-btn" onclick="filterHeroes('owned')">Owned</button>
+                <button class="filter-btn" onclick="filterHeroes('unowned')">Not Owned</button>
+            </div>
+            <div class="rarity-filters">
+                <button class="rarity-filter common" onclick="filterByRarity('common')">Common</button>
+                <button class="rarity-filter rare" onclick="filterByRarity('rare')">Rare</button>
+                <button class="rarity-filter epic" onclick="filterByRarity('epic')">Epic</button>
+                <button class="rarity-filter legendary" onclick="filterByRarity('legendary')">Legendary</button>
+                <button class="rarity-filter clear" onclick="clearRarityFilter()">Clear</button>
+            </div>
+        </div>
+
+        <!-- Heroes Grid -->
+        <div class="heroes-index-grid">
+            {% for hero in all_heroes %}
+                {% set is_owned = hero in user_heroes %}
+                <div class="hero-index-card {{ hero.rarity.lower() }} {% if not is_owned %}unowned{% endif %}" 
+                     data-owned="{{ 'true' if is_owned else 'false' }}" 
+                     data-rarity="{{ hero.rarity.lower() }}">
+                    
+                    <div class="hero-image-container">
+                        {% if hero.image %}
+                            <img src="{{ hero.image }}" alt="{{ hero.name }}" class="hero-image">
+                        {% else %}
+                            <div class="hero-image hero-placeholder">🛡️</div>
+                        {% endif %}
+                        
+                        {% if is_owned %}
+                            <div class="owned-badge">✓</div>
+                        {% else %}
+                            <div class="locked-overlay">
+                                <div class="lock-icon">🔒</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="hero-info">
+                        <div class="hero-name">{{ hero.name if is_owned else '???' }}</div>
+                        <div class="hero-description">
+                            {{ hero.description if is_owned else 'Collect this hero to reveal its description!' }}
+                        </div>
+                        <span class="hero-rarity rarity-{{ hero.rarity.lower() }}">{{ hero.rarity }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Back to Dashboard -->
+        <div class="back-section">
+            <a href="{{ url_for('home') }}" class="btn btn-back">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+</body>
+</html>

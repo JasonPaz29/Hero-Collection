@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Trading</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">🛡️ Hero Collection</div>
+            <div class="user-info">
+                <div class="username">Welcome, {{ current_user.username }}</div>
+                <div class="tokens">💰 {{ current_user.tokens }} Tokens</div>
+                <a href="{{ url_for('dashboard') }}" class="homeL">🏠 Dashboard</a>
+                <a href="{{ url_for('roll') }}" class="homeL">Roll</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="trade-header">
+            <h1 class="trade-title">🤝 Hero Trading</h1>
+            <p class="trade-subtitle">Trade your heroes with other players</p>
+        </div>
+
+        <!-- My Heroes Section -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">⚔️</span>
+                Your Heroes ({{ user_heroes|length }})
+            </h2>
+            
+            {% if user_heroes %}
+                <div class="heroes-grid">
+                    {% for hero in user_heroes %}
+                        <div class="hero-card {{ hero.rarity.lower() }} selectable-hero" data-hero-id="{{ hero.id }}" data-hero-name="{{ hero.name }}">
+                            {% if hero.image %}
+                                <img src="{{ hero.image }}" alt="{{ hero.name }}" class="hero-image">
+                            {% else %}
+                                <div class="hero-image">🛡️</div>
+                            {% endif %}
+                            <div class="hero-info">
+                                <div class="hero-name">{{ hero.name }}</div>
+                                <div class="hero-description">{{ hero.description }}</div>
+                                <span class="hero-rarity rarity-{{ hero.rarity.lower() }}">{{ hero.rarity }}</span>
+                            </div>
+                            <div class="selection-overlay">
+                                <div class="selection-checkmark">✓</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">⚔️</div>
+                    <h3>No Heroes to Trade</h3>
+                    <p>You need heroes to start trading!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Other Players' Heroes Section -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">👥</span>
+                Available Heroes from Other Players
+            </h2>
+            
+            <!-- Search/Filter Bar -->
+            <div class="filter-bar">
+                <input type="text" id="searchInput" placeholder="Search heroes or players..." class="search-input">
+                <select id="rarityFilter" class="filter-select">
+                    <option value="">All Rarities</option>
+                    <option value="legendary">Legendary</option>
+                    <option value="epic">Epic</option>
+                    <option value="rare">Rare</option>
+                    <option value="common">Common</option>
+                </select>
+            </div>
+
+            {% if other_users %}
+                <div class="other-heroes-grid" id="otherHeroesGrid">
+                    {% for user_hero in other_users %}
+                        <div class="other-hero-card selectable-target" 
+                             data-owner="{{ user_hero.owner }}" 
+                             data-hero="{{ user_hero.hero }}"
+                             data-hero-id="{{ user_hero.hero_id }}"
+                             data-owner-id="{{ user_hero.owner_id }}"
+                             data-rarity="{{ user_hero.rarity.lower() }}">
+                            <div class="other-hero-image">🗡️</div>
+                            <div class="other-hero-info">
+                                <div class="other-hero-name">{{ user_hero.hero }}</div>
+                                <div class="other-hero-owner">Owner: {{ user_hero.owner }}</div>
+                                <span class="hero-rarity rarity-{{ user_hero.rarity.lower() }}">{{ user_hero.rarity }}</span>
+                            </div>
+                            <div class="selection-overlay">
+                                <div class="selection-checkmark">✓</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <h3>No Other Players</h3>
+                    <p>No other players have heroes available for trading.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Incoming Trades Section -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">📥</span>
+                Incoming Trade Offers
+                {% if incoming_trades %}({{ incoming_trades|length }}){% endif %}
+            </h2>
+            
+            {% if incoming_trades %}
+                <div class="trades-list">
+                    {% for trade in incoming_trades %}
+                        <div class="trade-item">
+                            <div class="trade-header">
+                                <div class="trade-from">Trade offer from: {{ trade.sender.username }}</div>
+                                <span class="trade-status status-{{ trade.status.lower() }}">{{ trade.status.title() }}</span>
+                            </div>
+                            <div class="trade-heroes">
+                                <div class="trade-hero">
+                                    <strong>They're Offering:</strong><br>
+                                    {{ trade.offered_hero.name }}<br>
+                                    <small>{{ trade.offered_hero.rarity }} Rarity</small>
+                                </div>
+                                <div class="trade-arrow">⇄</div>
+                                <div class="trade-hero">
+                                    <strong>They Want:</strong><br>
+                                    {{ trade.requested_hero.name }}<br>
+                                    <small>{{ trade.requested_hero.rarity }} Rarity</small>
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                <form method="POST" action="{{ url_for('accept_trade', trade_id=trade.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-accept">Accept Trade</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('decline_trade', trade_id=trade.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-decline">Decline</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <h3>No Incoming Trades</h3>
+                    <p>No one has offered you any trades yet.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Outgoing Trades Section -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">📤</span>
+                Your Trade Offers
+                {% if outgoing_trades %}({{ outgoing_trades|length }}){% endif %}
+            </h2>
+            
+            {% if outgoing_trades %}
+                <div class="trades-list">
+                    {% for trade in outgoing_trades %}
+                        <div class="trade-item">
+                            <div class="trade-header">
+                                <div class="trade-from">Trade offer to: {{ trade.receiver.username }}</div>
+                                <span class="trade-status status-{{ trade.status.lower() }}">{{ trade.status.title() }}</span>
+                            </div>
+                            <div class="trade-heroes">
+                                <div class="trade-hero">
+                                    <strong>You're Offering:</strong><br>
+                                    {{ trade.offered_hero.name }}<br>
+                                    <small>{{ trade.offered_hero.rarity }} Rarity</small>
+                                </div>
+                                <div class="trade-arrow">⇄</div>
+                                <div class="trade-hero">
+                                    <strong>You Want:</strong><br>
+                                    {{ trade.requested_hero.name }}<br>
+                                    <small>{{ trade.requested_hero.rarity }} Rarity</small>
+                                </div>
+                            </div>
+                            {% if trade.status == 'pending' %}
+                                <div class="action-buttons">
+                                    <form method="POST" action="{{ url_for('cancel_trade', trade_id=trade.id) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-secondary">Cancel Trade</button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📤</div>
+                    <h3>No Outgoing Trades</h3>
+                    <p>You haven't sent any trade offers yet.</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="section trade-proposal" id="tradeProposal" style="display: none;">
+            <h2 class="section-title">
+                <span class="section-icon">🤝</span>
+                Create Trade Offer
+            </h2>
+            
+            <div class="trade-summary">
+                <div class="trade-side">
+                    <h3>You're Offering:</h3>
+                    <div class="selected-hero" id="selectedMyHero">
+                        <div class="placeholder">Select one of your heroes above</div>
+                    </div>
+                </div>
+                
+                <div class="trade-arrow">
+                    <span class="arrow-icon">⇄</span>
+                </div>
+                
+                <div class="trade-side">
+                    <h3>You Want:</h3>
+                    <div class="selected-hero" id="selectedTheirHero">
+                        <div class="placeholder">Select a hero from another player</div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('create_trade') }}" id="tradeForm">
+                <input type="hidden" name="offered_hero_id" id="offeredHeroId">
+                <input type="hidden" name="requested_hero_id" id="requestedHeroId">
+                <input type="hidden" name="receiver_id" id="receiverId">
+                
+                <div class="trade-actions">
+                    <button type="submit" class="btn btn-primary" id="submitTrade" disabled>
+                        Send Trade Offer
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelTrade">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script>
+        let selectedMyHero = null;
+        let selectedTheirHero = null;
+        
+        // Handle hero selection
+        document.querySelectorAll('.selectable-hero').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove previous selection
+                document.querySelectorAll('.selectable-hero').forEach(c => c.classList.remove('selected'));
+                
+                // Select this card
+                this.classList.add('selected');
+                selectedMyHero = {
+                    id: this.dataset.heroId,
+                    name: this.dataset.heroName
+                };
+                
+                updateTradeProposal();
+            });
+        });
+        
+        document.querySelectorAll('.selectable-target').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove previous selection
+                document.querySelectorAll('.selectable-target').forEach(c => c.classList.remove('selected'));
+                
+                // Select this card
+                this.classList.add('selected');
+                selectedTheirHero = {
+                    id: this.dataset.heroId,
+                    name: this.dataset.hero,
+                    owner: this.dataset.owner,
+                    ownerId: this.dataset.ownerId
+                };
+                
+                updateTradeProposal();
+            });
+        });
+        
+        function updateTradeProposal() {
+            const proposal = document.getElementById('tradeProposal');
+            const submitBtn = document.getElementById('submitTrade');
+            
+            // Update my hero display
+            if (selectedMyHero) {
+                document.getElementById('selectedMyHero').innerHTML = 
+                    `<div class="mini-hero"><strong>${selectedMyHero.name}</strong></div>`;
+                document.getElementById('offeredHeroId').value = selectedMyHero.id;
+            }
+            
+            // Update their hero display
+            if (selectedTheirHero) {
+                document.getElementById('selectedTheirHero').innerHTML = 
+                    `<div class="mini-hero"><strong>${selectedTheirHero.name}</strong><br><small>from ${selectedTheirHero.owner}</small></div>`;
+                document.getElementById('requestedHeroId').value = selectedTheirHero.id;
+                document.getElementById('receiverId').value = selectedTheirHero.ownerId;
+            }
+            
+            // Show/hide proposal section and enable submit
+            if (selectedMyHero && selectedTheirHero) {
+                proposal.style.display = 'block';
+                submitBtn.disabled = false;
+            } else {
+                proposal.style.display = 'none';
+                submitBtn.disabled = true;
+            }
+        }
+        
+        // Cancel trade
+        document.getElementById('cancelTrade').addEventListener('click', function() {
+            selectedMyHero = null;
+            selectedTheirHero = null;
+            document.querySelectorAll('.selected').forEach(card => card.classList.remove('selected'));
+            document.getElementById('tradeProposal').style.display = 'none';
+        });
+        
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const cards = document.querySelectorAll('.other-hero-card');
+            
+            cards.forEach(card => {
+                const heroName = card.dataset.hero.toLowerCase();
+                const ownerName = card.dataset.owner.toLowerCase();
+                
+                if (heroName.includes(searchTerm) || ownerName.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+        
+        // Rarity filter
+        document.getElementById('rarityFilter').addEventListener('change', function() {
+            const selectedRarity = this.value;
+            const cards = document.querySelectorAll('.other-hero-card');
+            
+            cards.forEach(card => {
+                if (!selectedRarity || card.dataset.rarity === selectedRarity) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

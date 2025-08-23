@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add New Hero</title>
+</head>
+<body>
+    <h1>Add a Hero</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <label for="name">Hero Name:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="description">Hero Description:</label><br>
+        <textarea id="description" name="description"></textarea><br><br>
+
+        <label for="image url">Hero Image:</label><br>
+        <textarea id="image" name="image"></textarea><br><br>
+
+        <label for="rarity">Hero Rarity:</label><br>
+        <textarea id="rarity" name="rarity"></textarea><br><br>
+
+        <button type="submit">Add Item</button>
+    </form>
+
+    <br>
+    <a href="/">Back to Home</a>
+</body>
+</html>

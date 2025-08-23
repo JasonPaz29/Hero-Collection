@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Achievements</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='achievement.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">🛡️ Hero Collection</div>
+            <div class="user-info">
+                <div class="tokens">💰 {{ current_user.tokens }} Tokens</div>
+                <div class="username">Welcome, {{ current_user.username }}!</div>
+                <div class="homeL"><a href="{{ url_for('home')}}">Home</a></div>
+                <div class="homeL"><a href="{{ url_for('dashboard')}}">Dashboard</a></div>
+                <div class="homeL"><a href="{{ url_for('trade')}}">Trade</a></div>
+                <div class="homeL"><a href="{{ url_for('roll')}}">Roll</a></div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="achievements-header">
+            <h1 class="achievements-title">🏆 Achievements</h1>
+            <p class="achievements-subtitle">Track your progress and unlock rewards!</p>
+            
+            <div class="achievement-stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ user_achievements|length }}</span>
+                    <span class="stat-label">Unlocked</span>
+                </div>
+                <div class="stat-divider">/</div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ all_achievements|length }}</span>
+                    <span class="stat-label">Total</span>
+                </div>
+                <div class="progress-bar">
+                </div>
+            </div>
+        </div>
+
+        <!-- Check Achievements Button -->
+        <div class="check-section">
+            <form method="POST" action="{{ url_for('check_achievements') }}">
+                <button type="submit" class="btn-check-achievements">
+                    <span class="check-icon">🔍</span>
+                    Check New Achievements
+                </button>
+            </form>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="filter-section">
+            <button class="filter-btn active" onclick="filterAchievements('all')">All</button>
+            <button class="filter-btn" onclick="filterAchievements('unlocked')">Unlocked</button>
+            <button class="filter-btn" onclick="filterAchievements('locked')">Locked</button>
+            <button class="filter-btn" onclick="filterAchievements('easy')">Easy</button>
+            <button class="filter-btn" onclick="filterAchievements('medium')">Medium</button>
+            <button class="filter-btn" onclick="filterAchievements('hard')">Hard</button>
+            <button class="filter-btn" onclick="filterAchievements('legendary')">Legendary</button>
+        </div>
+
+        <!-- Achievements Grid -->
+        <div class="achievements-section">
+            <div class="achievements-grid">
+                {% for achievement in all_achievements %}
+                    {% set is_unlocked = achievement.id in user_achievement_ids %}
+                    <div class="achievement-card {% if not is_unlocked %}locked{% endif %} difficulty-{{ achievement.difficulty.lower() }}" 
+                         data-difficulty="{{ achievement.difficulty.lower() }}" 
+                         data-status="{% if is_unlocked %}unlocked{% else %}locked{% endif %}">
+                        
+                        <!-- Achievement Icon -->
+                        <div class="achievement-icon">
+                            {% if is_unlocked %}
+                                <span class="trophy-icon">🏆</span>
+                            {% else %}
+                                <span class="locked-icon">🔒</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Achievement Content -->
+                        <div class="achievement-content">
+                            <div class="achievement-name">
+                                {% if is_unlocked %}
+                                    {{ achievement.name }}
+                                {% else %}
+                                    <span class="hidden-text">???</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="achievement-description">
+                                {% if is_unlocked %}
+                                    {{ achievement.description }}
+                                {% else %}
+                                    <span class="hidden-description">Complete this achievement to unlock!</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="achievement-condition">
+                                {% if is_unlocked %}
+                                    <span class="condition-text">{{ achievement.condition }}</span>
+                                {% else %}
+                                    <span class="hidden-condition">{{ achievement.condition }}</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="achievement-difficulty difficulty-{{ achievement.difficulty.lower() }}">
+                                {{ achievement.difficulty }}
+                            </div>
+                        </div>
+                        
+                        <!-- Completion Status -->
+                        <div class="achievement-status">
+                            {% if is_unlocked %}
+                                <span class="status-completed">✓ Completed</span>
+                            {% else %}
+                                <span class="status-locked">Locked</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Unlock Animation Overlay -->
+                        {% if is_unlocked %}
+                            <div class="unlock-glow"></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Empty State -->
+            {% if not all_achievements %}
+                <div class="empty-state">
+                    <div class="empty-icon">🏆</div>
+                    <h3>No Achievements Yet</h3>
+                    <p>Achievements will appear here as they're added to the game!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Achievement Categories -->
+        <div class="categories-section">
+            <h2 class="section-title">
+                <span class="section-icon">📊</span>
+                Achievement Categories
+            </h2>
+            
+            <div class="categories-grid">
+                <div class="category-card">
+                    <div class="category-icon">⚔️</div>
+                    <div class="category-name">Collection</div>
+                    <div class="category-progress">
+                        {% set collection_total = all_achievements|selectattr('condition', 'match', '.*collect.*|.*hero.*')|list|length %}
+                        {% set collection_completed = user_achievements|selectattr('condition', 'match', '.*collect.*|.*hero.*')|list|length %}
+                        {{ collection_completed }}/{{ collection_total }}
+                    </div>
+                </div>
+                
+                <div class="category-card">
+                    <div class="category-icon">🎲</div>
+                    <div class="category-name">Rolling</div>
+                    <div class="category-progress">
+                        {% set rolling_total = all_achievements|selectattr('condition', 'match', '.*roll.*')|list|length %}
+                        {% set rolling_completed = user_achievements|selectattr('condition', 'match', '.*roll.*')|list|length %}
+                        {{ rolling_completed }}/{{ rolling_total }}
+                    </div>
+                </div>
+                
+                <div class="category-card">
+                    <div class="category-icon">🤝</div>
+                    <div class="category-name">Trading</div>
+                    <div class="category-progress">
+                        {% set trading_total = all_achievements|selectattr('condition', 'match', '.*trade.*')|list|length %}
+                        {% set trading_completed = user_achievements|selectattr('condition', 'match', '.*trade.*')|list|length %}
+                        {{ trading_completed }}/{{ trading_total }}
+                    </div>
+                </div>
+                
+                <div class="category-card">
+                    <div class="category-icon">💰</div>
+                    <div class="category-name">Economy</div>
+                    <div class="category-progress">
+                        {% set economy_total = all_achievements|selectattr('condition', 'match', '.*token.*|.*spend.*|.*earn.*')|list|length %}
+                        {% set economy_completed = user_achievements|selectattr('condition', 'match', '.*token.*|.*spend.*|.*earn.*')|list|length %}
+                        {{ economy_completed }}/{{ economy_total }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Unlock Notification -->
+    <div id="achievement-notification" class="achievement-notification">
+        <div class="notification-content">
+            <div class="notification-icon">🏆</div>
+            <div class="notification-text">
+                <div class="notification-title">Achievement Unlocked!</div>
+                <div class="notification-name" id="unlocked-name"></div>
+            </div>
+            <button class="notification-close" onclick="closeNotification()">×</button>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+</body>
+</html>
