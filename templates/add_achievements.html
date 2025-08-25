@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add New Achievement</title>
+</head>
+<body>
+    <h1>Add a Achievement</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <label for="name">Achievement Name:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="description">Achievement Description:</label><br>
+        <textarea id="description" name="description"></textarea><br><br>
+
+        <label for="type">Type of Achievement:</label><br>
+        <input type="text" id="type" name="value" required></textarea><br><br>
+
+        <label for="value">Achievement value:</label><br>
+        <input type="number" id="value" name="value" step="1"></textarea><br><br>
+
+        <label for="difficulty">Achievement difficulty:</label><br>
+        <input type="text" id="difficulty" name="difficulty"></textarea><br><br>
+
+        <button type="submit">Add Item</button>
+    </form>
+
+    <br>
+    <a href="/">Back to Home</a>
+</body>
+</html>

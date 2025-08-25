@@ -290,7 +290,7 @@ def roll():
     return render_template('roll.html')
 
 def rolling(chosen_rarity):
-    numHeroes = Hero.query.count(rarity=chosen_rarity)
+    numHeroes = Hero.query.filter_by(rarity=chosen_rarity).count()
     index = random.randint(0, numHeroes-1)
     chosen_hero = Hero.query.filter_by(rarity=chosen_rarity).offset(index).first()
     return chosen_hero
@@ -446,31 +446,82 @@ def hero_index():
     all_heroes = Hero.query.all()
     return render_template("hero_index.html", user_heroes=user_heroes, all_heroes=all_heroes)
 
-@app.route('/add_heroes')
+@app.route('/add_heroes', methods=['GET', 'POST'])
 @login_required
 def add_heroes():
     if current_user.username != ADMIN:
         flash("You are not allowed on there!", "danger")
         return redirect(url_for('home'))
-                #Finish the achievements, make the Goku character, make an index for the heroes so the User can see which heroes he has and doesn't, hide Goku
-                #Fix the daily token issue, patch out issues with the achievement page, update the navbar, !!Maybe update the User database to add trade_count
-                #After that, debugging begins!!!
+    
+    if request.method == 'POST':
+        name = request.form.get("name")
+        description = request.form.get("description")
+        rarity = request.form.get("rarity")
+        image = request.form.get("image")
+    
+        if not name:
+            flash("Hero name is required", "warning")
+            return redirect(url_for("add_heroes"))
+        
+        if not description:
+            flash("Hero description is required", "warning")
+            return redirect(url_for('add_heroes'))
+        
+        if not rarity:
+            flash("Hero rarity is required", "warning")
+            return redirect(url_for('add_heroes'))
+        
+        if not image:
+            flash("Hero image is required", "warning")
+            return redirect(url_for('add_heroes'))
+        
+        new_hero = Hero(name=name, description=description, rarity=rarity, image=image)
+        db.session.add(new_hero)
+        db.session.commit()
+        flash("The hero was successfully added!", "success")
+        return redirect(url_for('add_heroes'))
+    return render_template("add_heroes.html")
 
 
-#Make either the shop(maybe a way to get tokens?) or the achievements.
+@app.route('/add_achievements', methods=['GET', 'POST'])
+@login_required
+def add_achievements():
+    if current_user.username != ADMIN:
+        flash("You are not allowed on there!", "danger")
+        return redirect(url_for('home'))
 
-    #Goals For Today:
-#Make the Home Page Look Nice, and Have links to most parts,
-#Make the Registration and Login Page, Little to no AI Usage if possible
-#Set up a dashboard Page that can handle: Collected Heroes, Trade Requests, and A link to the rolling page.
+    if request.method == "POST":
+        name = request.form.get('name')
+        description = request.form.get('description')
+        type = request.form.get('type')
+        value = int(request.form.get('value'))
+        difficulty = request.form.get('difficulty')
+    
+        if not name:
+            flash("Achievement name is needed.", "warning")
+            return redirect(url_for('add_achievements'))
+        
+        if not description:
+            flash("Achievement description is needed.", "warning")
+            return redirect(url_for('add_achievements'))
+        
+        if not type:
+            flash("Achievement type is needed.", "warning")
+            return redirect(url_for('add_achievements'))
 
+        if not value:
+            flash("Achievement value is needed.", "warning")
+            return redirect(url_for('add_achievements'))
+        
+        if not difficulty:
+            flash("Achievement difficulty is needed.", "warning")
+            return redirect(url_for('add_achievements'))
+        
+        new_achievement = Achievement(name=name, description=description, type=type, value=value, difficulty=difficulty)
+        db.session.add(new_achievement)
+        db.session.commit()
+    
+    return render_template("add_achievements.html")
 
-
-
-
-#Account Signup and Login System
-#Turn this code into a Card Collecting game where you have to collect all the heroes from a 
-#wheel and each hero has a different rarity (ex. Goku has a 1/100k and Luffy has a 1/3). A Token System where you get tokens from duplicates and also buy spins
-#Implement a trading system where you can offer trades between another user
 if __name__ == '__main__':
     app.run(debug=True) 
