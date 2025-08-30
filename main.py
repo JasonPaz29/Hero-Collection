@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, request, redirect, flash
+from flask import Flask, render_template, url_for, request, redirect, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import login_user, logout_user, login_required, current_user, UserMixin, LoginManager
 from flask_migrate import Migrate
@@ -72,12 +72,19 @@ class Trade(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-
+'''
+def fix_superman():
+    with app.app_context():
+        superman = Hero.query.filter(Hero.id == 1).first()
+        superman.image = "https://preview.redd.it/superman-pfp-by-v0-k784f0i983af1.png?auto=webp&s=9afdf00b9b0f4af391bb9c37f90f0a25b3248fac"
+        db.session.commit()
+fix_superman()
+'''
 
 @app.route('/')
 def home():
     return render_template('index.html')  
+
     
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -131,7 +138,7 @@ def dashboard():
     today = datetime.utcnow().date()
     last_claim = current_user.last_daily_claim.date()
     if today > last_claim:
-        current_user.tokens += 50
+        current_user.tokens += 25
         current_user.last_daily_claim = datetime.utcnow()
         db.session.commit()
     user_heroes = current_user.heroes
@@ -365,12 +372,19 @@ def perform_roll():
         flash("You got a duplicate!", "dupe")
         if chosen_rarity == "common":
             current_user.tokens += 5
+            flash("You got 5 tokens!", "dupe")
         elif chosen_rarity == "rare":
             current_user.tokens += 10
+            flash("You got 10 tokens!", "dupe")
         elif chosen_rarity == "epic":
             current_user.tokens += 15
+            flash("You got 15 tokens!", "dupe")
         elif chosen_rarity == "legendary":
             current_user.tokens += 25
+            flash("You got 25 tokens!", "dupe")
+        elif chosen_rarity == "godly":
+            current_user.tokens += 50
+            flash("You got 50 tokens!", "dupe")
         db.session.commit()
     return redirect(url_for('roll'))
 
@@ -392,22 +406,22 @@ def achievements():
 @app.route('/check_achievements', methods=['POST'])
 @login_required
 def check_achievements():
-    allAchivements = Achievement.query.all()
+    allAchievements = Achievement.query.all()
 
-    for achievement in allAchivements:
+    for achievement in allAchievements:
         if achievement in current_user.achievements:
             pass
         else:
             if achievement.type == "hero_collection":
-                if achievement.value == 1 and current_user.heroes.count() >= 1:
+                if achievement.value == 1 and len(current_user.heroes) >= 1:
                     current_user.achievements.append(achievement)
-                elif achievement.value == 5 and current_user.heroes.count() >= 5:
+                elif achievement.value == 5 and len(current_user.heroes) >= 5:
                     current_user.achievements.append(achievement)
-                elif achievement.value == 10 and current_user.heroes.count() >= 10:
+                elif achievement.value == 10 and len(current_user.heroes) >= 10:
                     current_user.achievements.append(achievement)
-                elif achievement.value == 20 and current_user.heroes.count() >= 20:
+                elif achievement.value == 20 and len(current_user.heroes) >= 20:
                     current_user.achievements.append(achievement)
-                elif achievement.value == 25 and current_user.heroes.count() >= 25:
+                elif achievement.value == 25 and len(current_user.heroes) >= 25:
                     current_user.achievements.append(achievement)
             elif achievement.type == "roll_count":
                 if achievement.value == 1 and current_user.rolls_done >= 1:
@@ -437,6 +451,7 @@ def check_achievements():
                 for hero in current_user.heroes:
                     if hero.name == 'goku':
                         current_user.achievements.append(achievement)
+            db.session.commit()
     return redirect(url_for('achievements'))
 
 @app.route('/hero_index')
@@ -493,8 +508,8 @@ def add_achievements():
     if request.method == "POST":
         name = request.form.get('name')
         description = request.form.get('description')
-        type = request.form.get('type')
-        value = int(request.form.get('value'))
+        type = str(request.form.get('type'))
+        value = request.form.get('value')
         difficulty = request.form.get('difficulty')
     
         if not name:
@@ -520,8 +535,10 @@ def add_achievements():
         new_achievement = Achievement(name=name, description=description, type=type, value=value, difficulty=difficulty)
         db.session.add(new_achievement)
         db.session.commit()
+        flash("The achievement was successfully added!", "success")
     
     return render_template("add_achievements.html")
+
 
 if __name__ == '__main__':
     app.run(debug=True) 

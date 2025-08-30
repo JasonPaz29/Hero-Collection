@@ -17,6 +17,7 @@
                 <div class="homeL"><a href="{{ url_for('home')}}">Home</a></div>
                 <div class="homeL"><a href="{{ url_for('trade')}}">Trade</a></div>
                 <div class="homeL"><a href="{{ url_for('roll')}}">Roll</a></div>
+                <div class="homeL"><a href="{{ url_for('achievements')}}">Achievements</a></div>
             </div>
         </div>
     </nav>
@@ -45,60 +46,72 @@
             
         </div>
 
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <div class="filter-buttons">
-                <button class="filter-btn active" onclick="filterHeroes('all')">All Heroes</button>
-                <button class="filter-btn" onclick="filterHeroes('owned')">Owned</button>
-                <button class="filter-btn" onclick="filterHeroes('unowned')">Not Owned</button>
-            </div>
-            <div class="rarity-filters">
-                <button class="rarity-filter common" onclick="filterByRarity('common')">Common</button>
-                <button class="rarity-filter rare" onclick="filterByRarity('rare')">Rare</button>
-                <button class="rarity-filter epic" onclick="filterByRarity('epic')">Epic</button>
-                <button class="rarity-filter legendary" onclick="filterByRarity('legendary')">Legendary</button>
-                <button class="rarity-filter clear" onclick="clearRarityFilter()">Clear</button>
-            </div>
-        </div>
-
-        <!-- Heroes Grid -->
-        <div class="heroes-index-grid">
-            {% for hero in all_heroes %}
-                {% set is_owned = hero in user_heroes %}
-                <div class="hero-index-card {{ hero.rarity.lower() }} {% if not is_owned %}unowned{% endif %}" 
-                     data-owned="{{ 'true' if is_owned else 'false' }}" 
-                     data-rarity="{{ hero.rarity.lower() }}">
-                    
-                    <div class="hero-image-container">
-                        {% if hero.image %}
-                            <img src="{{ hero.image }}" alt="{{ hero.name }}" class="hero-image">
-                        {% else %}
-                            <div class="hero-image hero-placeholder">🛡️</div>
+        <!-- Heroes Grid by Rarity -->
+<div class="heroes-index-container">
+    {% set rarity_order = ['godly', 'legendary', 'epic', 'rare', 'common'] %}
+    {% set heroes_by_rarity = {} %}
+    
+    {# Group heroes by rarity #}
+    {% for hero in all_heroes %}
+        {% if heroes_by_rarity.update({hero.rarity: heroes_by_rarity.get(hero.rarity, []) + [hero]}) %}{% endif %}
+    {% endfor %}
+    
+    {% for rarity in rarity_order %}
+        {% if heroes_by_rarity.get(rarity) %}
+            <div class="rarity-section">
+                <h2 class="rarity-header rarity-{{ rarity.lower() }}">
+                    <span class="rarity-icon">
+                        {% if rarity == 'legendary' %}💎
+                        {% elif rarity == 'epic' %}⭐
+                        {% elif rarity == 'rare' %}🔮
+                        {% else %}⚔️
                         {% endif %}
-                        
-                        {% if is_owned %}
-                            <div class="owned-badge">✓</div>
-                        {% else %}
-                            <div class="locked-overlay">
-                                <div class="lock-icon">🔒</div>
+                    </span>
+                    {{ rarity.upper() }} Heroes
+                    <span class="hero-count">({{ heroes_by_rarity[rarity]|length }})</span>
+                </h2>
+                
+                <div class="heroes-rarity-grid">
+                    {% for hero in heroes_by_rarity[rarity]|sort(attribute='name') %}
+                        {% set is_owned = hero in user_heroes %}
+                        <div class="hero-index-card {{ hero.rarity.lower() }} {% if not is_owned %}unowned{% endif %}" 
+                             data-owned="{{ 'true' if is_owned else 'false' }}" 
+                             data-rarity="{{ hero.rarity.lower() }}">
+                            
+                            <div class="hero-image-container">
+                                {% if hero.image %}
+                                    <img src="{{ hero.image }}" alt="{{ hero.name }}" class="hero-image">
+                                {% else %}
+                                    <div class="hero-image hero-placeholder">🛡️</div>
+                                {% endif %}
+                                
+                                {% if is_owned %}
+                                    <div class="owned-badge">✓</div>
+                                {% else %}
+                                    <div class="locked-overlay">
+                                        <div class="lock-icon">🔒</div>
+                                    </div>
+                                {% endif %}
                             </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="hero-info">
-                        <div class="hero-name">{{ hero.name if is_owned else '???' }}</div>
-                        <div class="hero-description">
-                            {{ hero.description if is_owned else 'Collect this hero to reveal its description!' }}
+                            
+                            <div class="hero-info">
+                                <div class="hero-name">{{ hero.name if is_owned else '???' }}</div>
+                                <div class="hero-description">
+                                    {{ hero.description if is_owned else 'Collect this hero to reveal its description!' }}
+                                </div>
+                                <span class="hero-rarity rarity-{{ hero.rarity.lower() }}">{{ hero.rarity }}</span>
+                            </div>
                         </div>
-                        <span class="hero-rarity rarity-{{ hero.rarity.lower() }}">{{ hero.rarity }}</span>
-                    </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
 
         <!-- Back to Dashboard -->
         <div class="back-section">
-            <a href="{{ url_for('home') }}" class="btn btn-back">← Back to Dashboard</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Back to Dashboard</a>
         </div>
     </div>
 

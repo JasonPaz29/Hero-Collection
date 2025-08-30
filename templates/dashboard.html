@@ -16,6 +16,8 @@
                 <div class="homeL"><a href="{{ url_for('home')}}">Home</a></div>
                 <div class="homeL"><a href="{{ url_for('trade')}}">Trade</a></div>
                 <div class="homeL"><a href="{{ url_for('roll')}}">Roll</a></div>
+                <div class="homeL"><a href="{{ url_for('achievements')}}">Achievements</a></div> 
+                <div class="homeL"><a href="{{ url_for('logout')}}">Log Out</a></div>
             </div>
         </div>
     </nav>
@@ -35,7 +37,7 @@
             
             {% if user_heroes %}
                 <div class="heroes-grid">
-                    {% for hero in user_heroes[:4] %}
+                    {% for hero in user_heroes[:3] %}
                         <div class="hero-card {{ hero.rarity.lower() }}">
                             {% if hero.image %}
                                 <img src="{{ hero.image }}" alt="{{ hero.name }}" class="hero-image">
