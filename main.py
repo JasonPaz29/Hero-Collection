@@ -58,10 +58,10 @@ class Achievement(db.Model):
 
 class Trade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    offeredHero_id = db.Column(db.Integer, db.ForeignKey('hero.id'), primary_key=True)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-    requestedHero_id = db.Column(db.Integer, db.ForeignKey('hero.id'), primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    offeredHero_id = db.Column(db.Integer, db.ForeignKey('hero.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    requestedHero_id = db.Column(db.Integer, db.ForeignKey('hero.id'), nullable=False)
     status = db.Column(db.String(50), default="pending")
 
     sender = db.relationship("User", foreign_keys=[sender_id])
@@ -156,7 +156,8 @@ def trade():
                 'hero': hero.name,
                 'hero_id': hero.id,
                 'owner_id': user.id,
-                'rarity': hero.rarity
+                'rarity': hero.rarity,
+                'image': hero.image
             })
     
     user_heroes = current_user.heroes
@@ -174,7 +175,8 @@ def trade():
 def create_trade():
     receiver_id = int(request.form.get("receiver_id"))
     offered_hero_id = int(request.form.get("offered_hero_id"))
-    request_hero_id = int(request.form.get("request_hero_id"))
+    requested_hero_id = int(request.form.get("requested_hero_id"))
+    receiverHasHero = False
 
     sender_hero = Hero.query.filter_by(id=offered_hero_id).first()
 
@@ -191,48 +193,64 @@ def create_trade():
         return redirect(url_for('trade'))
     
     receiver = User.query.filter_by(id=receiver_id).first()
-    if request_hero_id not in receiver.heroes:
-            flash("That user does not own that hero!", "danger")
-            return redirect(url_for('trade'))
+    for hero in receiver.heroes:
+        if requested_hero_id == hero.id:
+            receiverHasHero = True
+            break
+        else:
+            pass
+    if not receiverHasHero:
+        flash("That user does not own that hero!", "danger")
+        return redirect(url_for('trade'))
+        
     
-    existing_trade = Trade.query.filter_by(sender_id=current_user.id, receiver_id=receiver_id, offeredHero_id=offered_hero_id, requestHero_id=request_hero_id, status="pending").first()
+    existing_trade = Trade.query.filter_by(sender_id=current_user.id, receiver_id=receiver_id, offeredHero_id=offered_hero_id, requestedHero_id=requested_hero_id, status="pending").first()
 
     if existing_trade:
         flash("This trade already exists!", "danger")
         return redirect(url_for('trade'))
     
-    new_trade = Trade(sender_id=current_user.id, receiver_id=receiver_id, offeredHero_id=offered_hero_id, requestHero_id=request_hero_id, status="pending")
+    new_trade = Trade(sender_id=current_user.id, receiver_id=receiver_id, offeredHero_id=offered_hero_id, requestedHero_id=requested_hero_id, status="pending")
     db.session.add(new_trade)
     db.session.commit()
     flash("The trade was sent successfully!", "success")
     return redirect(url_for("trade"))
     
-@app.route('/accept_trade/<int:trade_id>')
+@app.route('/accept_trade/<int:trade_id>', methods=["POST"])
 @login_required
 def accept_trade(trade_id):
     trade = Trade.query.filter_by(id=trade_id).first()
+    receiverHasHero = False
     
     if not trade:
         flash("This trade does not exist!", "error")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('trade'))
     
     if current_user.id != trade.receiver_id:
         flash("You can't accept this trade!", "danger")
-        redirect(url_for('dashboard'))
+        redirect(url_for('trade'))
 
     if trade.status != "pending":
         flash("This trade no longer is available", "error")
-        redirect(url_for('dashboard'))
+        redirect(url_for('trade'))
     
     sender = User.query.get(trade.sender_id)
 
-    if trade.offeredHero_id not in sender.heroes:
-        flash("The other player no longer owns that hero!", "error")
+    for hero in sender.heroes:
+        if trade.offeredHero_id == hero.id:
+            receiverHasHero = True
+            break
+        else:
+            pass
+    if not receiverHasHero:
+        flash("The other user no longer owns that hero!", "error")
         trade.status = "cancelled"
-        return redirect(url_for('dashboard'))
+        db.session.commit()
+        return redirect(url_for('trade'))
+        
     
     offered_hero = Hero.query.get(trade.offeredHero_id)
-    requested_hero = Hero.query.get(trade.requestHero_id)
+    requested_hero = Hero.query.get(trade.requestedHero_id)
 
 
     current_user.heroes.remove(requested_hero)
@@ -247,49 +265,49 @@ def accept_trade(trade_id):
     flash("The trade was completed successfully!", "info")
     return redirect(url_for('dashboard'))
 
-@app.route('/decline_trade/<int:trade_id>')
+@app.route('/decline_trade/<int:trade_id>', methods=["POST"])
 @login_required
 def decline_trade(trade_id):
     trade = Trade.query.filter_by(id=trade_id).first()
 
     if not trade:
         flash("This trade does not exist!", "error")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('trade'))
     
     if current_user.id != trade.receiver_id:
         flash("You cannot deny this trade!", "danger")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('trade'))
     
     if trade.status != "pending":
         flash("This trade no longer exists!", "error")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('trade'))
 
     trade.status = "declined"
     db.session.commit()
     flash("The trade was declined.", "info")
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("trade"))
 
-@app.route('/cancel_trade/<int:trade_id>')
+@app.route('/cancel_trade/<int:trade_id>', methods=["POST"])
 @login_required
 def cancel_trade(trade_id):
     trade = Trade.query.filter_by(id=trade_id).first()
 
     if not trade:
         flash("This trade does not exist!", "error")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('trade'))
     
-    if current_user.id != trade.receiver_id:
+    if current_user.id != trade.sender_id:
         flash("You cannot deny this trade!", "danger")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('trade'))
     
     if trade.status != "pending":
         flash("This trade no longer exists!", "error")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('trade'))
 
     trade.status = "cancelled"
     db.session.commit()
     flash("The trade was successfully cancelled.", "info")
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('trade'))
 
 @app.route('/roll')
 @login_required
@@ -442,7 +460,7 @@ def check_achievements():
                 elif achievement.value == 50 and current_user.tokens_spent >= 50:
                     current_user.achievements.append(achievement)
                 elif achievement.value == 100 and current_user.tokens_spent >= 100:
-                    current_user.value.achievements.append(achievement)
+                    current_user.achievements.append(achievement)
                 elif achievement.value == 250 and current_user.tokens_spent >= 250:
                     current_user.achievements.append(achievement)
                 elif achievement.value == 500 and current_user.tokens_spent >= 500:

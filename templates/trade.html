@@ -91,7 +91,7 @@
                              data-hero-id="{{ user_hero.hero_id }}"
                              data-owner-id="{{ user_hero.owner_id }}"
                              data-rarity="{{ user_hero.rarity.lower() }}">
-                            <div class="other-hero-image">🗡️</div>
+                            <div class="other-hero-image"><img src="{{ user_hero.image }}" alt="{{ user_hero.name }}"></div>
                             <div class="other-hero-info">
                                 <div class="other-hero-name">{{ user_hero.hero }}</div>
                                 <div class="other-hero-owner">Owner: {{ user_hero.owner }}</div>
