@@ -53,10 +53,10 @@
                     {% endfor %}
                 </div>
                 
-                {% if user_heroes|length > 4 %}
+                {% if user_heroes|length > 3 %}
                     <div class="view-all-heroes">
                         <a href="{{ url_for('hero_index') }}" class="btn btn-secondary">
-                            📖 Click here to see the full index! ({{ user_heroes|length - 4 }} more heroes)
+                            📖 Click here to see the full index! ({{ user_heroes|length - 3 }} more heroes)
                         </a>
                     </div>
                 {% else %}

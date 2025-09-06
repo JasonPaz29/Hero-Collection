@@ -72,14 +72,6 @@ class Trade(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-'''
-def fix_superman():
-    with app.app_context():
-        superman = Hero.query.filter(Hero.id == 1).first()
-        superman.image = "https://preview.redd.it/superman-pfp-by-v0-k784f0i983af1.png?auto=webp&s=9afdf00b9b0f4af391bb9c37f90f0a25b3248fac"
-        db.session.commit()
-fix_superman()
-'''
 
 @app.route('/')
 def home():
@@ -467,7 +459,7 @@ def check_achievements():
                     current_user.achievements.append(achievement)
             elif achievement.type == "goku":
                 for hero in current_user.heroes:
-                    if hero.name == 'goku':
+                    if hero.name == 'Goku':
                         current_user.achievements.append(achievement)
             db.session.commit()
     return redirect(url_for('achievements'))
@@ -559,4 +551,4 @@ def add_achievements():
 
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(host="0.0.0.0", port=int("5000"), debug=True) 
