@@ -1,14 +1,15 @@
 # Hero Collection App
 
 A Flask web app to manage and explore a collection of heroes.  
-You can add, view, edit, and delete heroes, with support for relationships like cities, languages, and more.
+You can trade, roll heroes, and unlock achievements on this website.
 
 ## Features
 - View all heroes in the collection  
-- Add new heroes with details (name, abilities, etc.)  
-- Edit or delete existing heroes  
-- Organize heroes by cities, languages, and other attributes  
+- Trade heroes with other players
+- Gain daily tokens.
+- Unlock achievements throughout the game as you progress
 - Simple and clean Flask backend with templates
+- Uses SQLite + Flask along with Migrations for the database.
 
 ## Website
 
