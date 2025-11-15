@@ -36,6 +36,8 @@ class User(db.Model, UserMixin):
     tokens_spent = db.Column(db.Integer, default=0)
     rolls_done = db.Column(db.Integer, default=0)
     last_daily_claim = db.Column(db.DateTime, default=datetime.utcnow)
+    security_question = db.Column(db.String(200), nullable=True)
+    security_answer_hash = db.Column(db.String(200), nullable=True)
 
     heroes = db.relationship('Hero', secondary=user_heroes, backref="owners")
     achievements = db.relationship("Achievement", secondary=user_achievements, backref="owners")
@@ -77,6 +79,95 @@ def load_user(user_id):
 def home():
     return render_template('index.html')  
 
+@app.route('/set_security_question/<int:user_id>', methods=['GET', 'POST'])
+def set_security_question(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('register'))
+
+    if request.method == 'POST':
+        security_question = request.form.get('question')
+        security_answer = request.form.get('answer')
+
+        if not security_question or not security_answer:
+            flash("Both security question and answer are required.", "warning")
+            return redirect(url_for('set_security_question', user_id=user_id))
+
+        hashed_answer = generate_password_hash(security_answer, method='pbkdf2:sha256')
+
+        user.security_question = security_question
+        user.security_answer_hash = hashed_answer
+        db.session.commit()
+
+        flash("Security question and answer set successfully!", "success")
+        return redirect(url_for('login'))
+
+    return render_template('set_security.html', user=user)
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        username = request.form.get("username")
+        user = User.query.filter_by(username=username).first()
+        
+        if not user:
+            flash("User not found.", "danger")
+            return redirect(url_for('forgot_password'))
+
+        if not user.security_question or not user.security_answer_hash:
+            flash("Security question and answer not set for this user.", "danger")
+            return redirect(url_for('forgot_password'))
+        
+        return redirect(url_for('answer_security', user_id=user.id))
+    return render_template('forgot_password.html')
+
+@app.route('/answer_security/<int:user_id>', methods=['GET', 'POST'])
+def answer_security(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        security_answer = request.form.get('answer')
+
+        if not security_answer:
+            flash("Security answer is required.", "warning")
+            return redirect(url_for('answer_security', user_id=user_id))
+
+        if check_password_hash(user.security_answer_hash, security_answer):
+            flash("Security answer verified! You can now reset your password.", "success")
+            return redirect(url_for('reset_password', user_id=user_id))
+        else:
+            flash("Incorrect security answer. Please try again.", "danger")
+            return redirect(url_for('answer_security', user_id=user_id))
+
+    return render_template('answer_security.html', user=user)
+
+@app.route('/reset_password/<int:user_id>', methods=['GET', 'POST'])
+def reset_password(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        confirm = request.form.get('confirm_password')
+
+        if new_password != confirm:
+            flash("Passwords do not match!", "warning")
+            return redirect(url_for('reset_password', user_id=user_id))
+
+        hashed_password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        user.password = hashed_password
+        db.session.commit()
+
+        flash("Password reset successfully! You can now log in with your new password.", "success")
+        return redirect(url_for('login'))
+
+    return render_template('reset_password.html', user=user)
     
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -95,8 +186,10 @@ def register():
         new_user = User(username=username, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-        return redirect(url_for('login'))
+        flash("You have successfully registered!", "info")
+        return redirect(url_for('set_security_question', used_id=new_user.id))
     return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

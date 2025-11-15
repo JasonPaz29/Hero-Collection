@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Answer Security Question</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='forgot_password_security.css') }}">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-icon">❓</div>
+                <h1 class="auth-title">Security Question</h1>
+                <p class="auth-subtitle">Answer your security question to reset your password</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('answer_security', user_id=user.id) }}" class="auth-form">
+                <div class="security-question-display">
+                    <div class="question-label">Your Question:</div>
+                    <div class="question-text">{{ user.security_question }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="answer" class="form-label">
+                        <span class="label-icon">✍️</span>
+                        Your Answer
+                    </label>
+                    <input 
+                        type="text" 
+                        name="answer" 
+                        id="answer" 
+                        class="form-input" 
+                        placeholder="Enter your answer"
+                        required
+                        autocomplete="off"
+                    >
+                    <small class="form-hint">Answer is not case-sensitive</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    Verify Answer
+                </button>
+            </form>
+
+            <div class="auth-links">
+                <p><a href="{{ url_for('forgot_password') }}" class="auth-link">← Back to forgot password</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.animation = 'slideOut 0.3s ease forwards';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 300);
+                }, 5000);
+            });
+        });
+
+        // Add slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

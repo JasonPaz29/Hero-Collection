@@ -29,6 +29,25 @@ body {
     margin: 0 auto;
 }
 
+/* 📱 Mobile layout */
+@media (max-width: 768px) {
+    .navbar-content {
+        flex-direction: column;     /* stack logo + user-info */
+        align-items: flex-start;
+    }
+
+    .user-info {
+        width: 100%;
+        flex-direction: column;     /* stack tokens / username / links */
+        align-items: stretch;
+    }
+
+    .homeL a {
+        width: 100%;                /* full-width "buttons" */
+        text-align: center;
+    }
+}
+
 .logo {
     font-size: 1.8rem;
     font-weight: bold;
