@@ -1,25 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hero Trading</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="navbar-content">
-            <div class="logo">🛡️ Hero Collection</div>
-            <div class="user-info">
-                <div class="username">Welcome, {{ current_user.username }}</div>
-                <div class="tokens">💰 {{ current_user.tokens }} Tokens</div>
-                <a href="{{ url_for('dashboard') }}" class="homeL">🏠 Dashboard</a>
-                <a href="{{ url_for('roll') }}" class="homeL">Roll</a>
-                <div class="homeL"><a href="{{ url_for('achievements')}}">Achievements</a></div>
-                <div class="homeL"><a href="{{ url_for('home')}}">Home</a></div>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
+{% block title %}Hero Trading{% endblock %}
+{% block content %}
+   
 
     <div class="container">
         <div class="trade-header">
@@ -263,7 +245,7 @@
                 {% endfor %}
             </div>
         {% endif %}
-    {% endwith %}
+    {% endwith %}    
 
     <script>
         let selectedMyHero = null;
@@ -372,5 +354,4 @@
             });
         });
     </script>
-</body>
-</html>
+{% endblock %}

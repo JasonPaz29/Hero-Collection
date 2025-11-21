@@ -48,6 +48,11 @@ class Hero(db.Model):
     description = db.Column(db.String(200), nullable=False)
     image = db.Column(db.String(1000), nullable=False)
     rarity = db.Column(db.String(50), nullable=False)
+    greek_type = db.Column(db.String(50), nullable=True)
+    
+    base_hp = db.Column(db.Integer, default=100)
+    base_attack = db.Column(db.Integer, default=10)
+    base_defense = db.Column(db.Integer, default=5)
 
 
 class Achievement(db.Model):
@@ -94,7 +99,7 @@ def set_security_question(user_id):
             flash("Both security question and answer are required.", "warning")
             return redirect(url_for('set_security_question', user_id=user_id))
 
-        hashed_answer = generate_password_hash(security_answer, method='pbkdf2:sha256')
+        hashed_answer = generate_password_hash(security_answer.strip().lower(), method='pbkdf2:sha256')
 
         user.security_question = security_question
         user.security_answer_hash = hashed_answer
@@ -112,11 +117,11 @@ def forgot_password():
         user = User.query.filter_by(username=username).first()
         
         if not user:
-            flash("User not found.", "danger")
+            flash("User not found.", "password_info")
             return redirect(url_for('forgot_password'))
 
         if not user.security_question or not user.security_answer_hash:
-            flash("Security question and answer not set for this user.", "danger")
+            flash("Security question and answer not set for this user.", "error")
             return redirect(url_for('forgot_password'))
         
         return redirect(url_for('answer_security', user_id=user.id))
@@ -136,11 +141,11 @@ def answer_security(user_id):
             flash("Security answer is required.", "warning")
             return redirect(url_for('answer_security', user_id=user_id))
 
-        if check_password_hash(user.security_answer_hash, security_answer):
+        if check_password_hash(user.security_answer_hash, security_answer.strip().lower()):
             flash("Security answer verified! You can now reset your password.", "success")
             return redirect(url_for('reset_password', user_id=user_id))
         else:
-            flash("Incorrect security answer. Please try again.", "danger")
+            flash("Incorrect security answer. Please try again.", "warning")
             return redirect(url_for('answer_security', user_id=user_id))
 
     return render_template('answer_security.html', user=user)
@@ -187,7 +192,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         flash("You have successfully registered!", "info")
-        return redirect(url_for('set_security_question', used_id=new_user.id))
+        return redirect(url_for('set_security_question', user_id=new_user.id))
     return render_template('register.html')
 
 
@@ -562,7 +567,7 @@ def check_achievements():
 def hero_index():
     user_heroes = current_user.heroes
     all_heroes = Hero.query.all()
-    return render_template("hero_index.html", user_heroes=user_heroes, all_heroes=all_heroes)
+    return render_template("hero_index.html", user_heroes=user_heroes, all_heroes=all_heroes, )
 
 @app.route('/add_heroes', methods=['GET', 'POST'])
 @login_required

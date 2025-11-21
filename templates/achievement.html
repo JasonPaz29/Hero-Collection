@@ -1,26 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Achievements</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='achievement.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="navbar-content">
-            <div class="logo">🛡️ Hero Collection</div>
-            <div class="user-info">
-                <div class="tokens">💰 {{ current_user.tokens }} Tokens</div>
-                <div class="username">Welcome, {{ current_user.username }}!</div>
-                <div class="homeL"><a href="{{ url_for('home')}}">Home</a></div>
-                <div class="homeL"><a href="{{ url_for('dashboard')}}">Dashboard</a></div>
-                <div class="homeL"><a href="{{ url_for('trade')}}">Trade</a></div>
-                <div class="homeL"><a href="{{ url_for('roll')}}">Roll</a></div>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
+{% block title %}Achievements{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='achievement.css') }}">
+
 
     <div class="container">
         <div class="achievements-header">
@@ -152,8 +135,7 @@
             </div>
         {% endif %}
     {% endwith %}
-</body>
-</html>
+{% endblock %}
 
 <script>
 function closeNotification() {
