@@ -24,6 +24,11 @@ user_heroes = db.Table('user_heroes',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('hero_id', db.Integer, db.ForeignKey('hero.id'), primary_key=True))
 
+user_hero_history = db.Table('user_hero_history',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('hero_id', db.Integer, db.ForeignKey('hero.id'), primary_key=True),
+    db.Column('acquired_at', db.DateTime, default=datetime.utcnow))
+
 user_achievements = db.Table('user_achievements',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('achievement_id', db.Integer, db.ForeignKey('achievement.id'), primary_key=True))
@@ -39,7 +44,9 @@ class User(db.Model, UserMixin):
     security_question = db.Column(db.String(200), nullable=True)
     security_answer_hash = db.Column(db.String(200), nullable=True)
 
+
     heroes = db.relationship('Hero', secondary=user_heroes, backref="owners")
+    heroes_history = db.relationship('Hero', secondary=user_hero_history, backref="historical_owners")
     achievements = db.relationship("Achievement", secondary=user_achievements, backref="owners")
 
 class Hero(db.Model):
@@ -75,6 +82,7 @@ class Trade(db.Model):
     receiver = db.relationship("User", foreign_keys=[receiver_id])
     offered_hero = db.relationship("Hero", foreign_keys=[offeredHero_id])
     requested_hero = db.relationship("Hero", foreign_keys=[requestedHero_id])
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -474,6 +482,9 @@ def perform_roll():
     current_user.rolls_done += 1
     if chosen_hero.id not in [hero.id for hero in current_user.heroes]:
         current_user.heroes.append(chosen_hero)
+    if chosen_hero.id not in [hero.id for hero in current_user.heroes_history]:
+        current_user.heroes_history.append(chosen_hero)
+        flash("New hero added to your collection!", "info")
         db.session.commit()
     
     else:
@@ -515,21 +526,22 @@ def achievements():
 @login_required
 def check_achievements():
     allAchievements = Achievement.query.all()
+    amount_of_heroes = len(current_user.heroes)
 
     for achievement in allAchievements:
         if achievement in current_user.achievements:
             pass
         else:
             if achievement.type == "hero_collection":
-                if achievement.value == 1 and len(current_user.heroes) >= 1:
+                if achievement.value == 1 and amount_of_heroes >= 1:
                     current_user.achievements.append(achievement)
-                elif achievement.value == 5 and len(current_user.heroes) >= 5:
+                elif achievement.value == 5 and amount_of_heroes >= 5:
                     current_user.achievements.append(achievement)
-                elif achievement.value == 10 and len(current_user.heroes) >= 10:
+                elif achievement.value == 10 and amount_of_heroes >= 10:
                     current_user.achievements.append(achievement)
-                elif achievement.value == 20 and len(current_user.heroes) >= 20:
+                elif achievement.value == 20 and amount_of_heroes >= 20:
                     current_user.achievements.append(achievement)
-                elif achievement.value == 25 and len(current_user.heroes) >= 25:
+                elif achievement.value == 25 and amount_of_heroes >= 25:
                     current_user.achievements.append(achievement)
             elif achievement.type == "roll_count":
                 if achievement.value == 1 and current_user.rolls_done >= 1:
@@ -566,8 +578,17 @@ def check_achievements():
 @login_required
 def hero_index():
     user_heroes = current_user.heroes
+    user_hero_history = current_user.heroes_history
     all_heroes = Hero.query.all()
-    return render_template("hero_index.html", user_heroes=user_heroes, all_heroes=all_heroes, )
+    return render_template("hero_index.html", user_heroes=user_heroes, all_heroes=all_heroes, user_hero_history=user_hero_history)
+
+@app.route('/type_index')
+@login_required
+def type_index():
+    user_heroes = current_user.heroes
+    all_heroes = Hero.query.all()
+    greek_types = set(hero.greek_type for hero in all_heroes if hero.greek_type)
+    return render_template("type_index.html", user_heroes=user_heroes, all_heroes=all_heroes, greek_types=greek_types)
 
 @app.route('/add_heroes', methods=['GET', 'POST'])
 @login_required

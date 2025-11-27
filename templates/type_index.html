@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+{% block title %}Greek Type Index{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='type-index.css') }}">
+ <div class="container">
+        <div class="type-header">
+            <h1 class="type-title">⚔️ Greek Type System</h1>
+            <p class="type-subtitle">Understanding the strengths and weaknesses of Greek types</p>
+        </div>
+
+        <!-- Type Effectiveness Chart -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">📊</span>
+                Type Effectiveness Chart
+            </h2>
+            
+            <div class="effectiveness-info">
+                <div class="info-box advantage">
+                    <div class="info-icon">⚔️</div>
+                    <div class="info-text">
+                        <strong>Advantage:</strong> +15% Offense, +10% Defense
+                    </div>
+                </div>
+                <div class="info-box disadvantage">
+                    <div class="info-icon">🛡️</div>
+                    <div class="info-text">
+                        <strong>Disadvantage:</strong> -15% Offense, -10% Defense
+                    </div>
+                </div>
+            </div>
+
+            <div class="type-circle-container">
+                <svg class="type-circle" viewBox="0 0 400 400">
+                    <!-- Central circle -->
+                    <circle cx="200" cy="200" r="80" fill="rgba(52, 152, 219, 0.1)" stroke="#3498db" stroke-width="2"/>
+                    
+                    <defs>
+                        <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#27ae60" />
+                        </marker>
+                        <marker id="arrowhead-red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#e74c3c" />
+                        </marker>
+                    </defs>
+                    
+                    <!-- Strong/Weak arrows - will be shown via JavaScript -->
+                    <g id="advantage-arrows" style="opacity: 0; transition: opacity 0.3s;">
+                        <!-- Strong arrow (green) -->
+                        <path id="strong-arrow" d="" stroke="#27ae60" stroke-width="4" fill="none" 
+                              marker-end="url(#arrowhead-green)" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));"/>
+                        <!-- Weak arrow (red) -->
+                        <path id="weak-arrow" d="" stroke="#e74c3c" stroke-width="4" fill="none" 
+                              marker-end="url(#arrowhead-red)" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));"/>
+                    </g>
+
+                    <!-- Type nodes -->
+                    <g class="type-node" data-type="alpha">
+                        <circle cx="200" cy="50" r="35" class="node-circle type-alpha"/>
+                        <text x="200" y="60" class="node-text">Α</text>
+                        <text x="200" y="35" class="node-label">Alpha</text>
+                    </g>
+                    
+                    <g class="type-node" data-type="beta">
+                        <circle cx="320" cy="110" r="35" class="node-circle type-beta"/>
+                        <text x="320" y="120" class="node-text">Β</text>
+                        <text x="320" y="95" class="node-label">Beta</text>
+                    </g>
+                    
+                    <g class="type-node" data-type="gamma">
+                        <circle cx="350" cy="230" r="35" class="node-circle type-gamma"/>
+                        <text x="350" y="240" class="node-text">Γ</text>
+                        <text x="350" y="215" class="node-label">Gamma</text>
+                    </g>
+                    
+                    <g class="type-node" data-type="delta">
+                        <circle cx="280" cy="330" r="35" class="node-circle type-delta"/>
+                        <text x="280" y="335" class="node-text">Δ</text>
+                        <text x="280" y="355" class="node-label">Delta</text>
+                    </g>
+                    
+                    <g class="type-node" data-type="epsilon">
+                        <circle cx="120" cy="330" r="35" class="node-circle type-epsilon"/>
+                        <text x="120" y="335" class="node-text">Ε</text>
+                        <text x="120" y="355" class="node-label">Epsilon</text>
+                    </g>
+                    
+                    <g class="type-node" data-type="zeta">
+                        <circle cx="50" cy="230" r="35" class="node-circle type-zeta"/>
+                        <text x="50" y="240" class="node-text">Ζ</text>
+                        <text x="50" y="215" class="node-label">Zeta</text>
+                    </g>
+                    
+                    <g class="type-node" data-type="eta">
+                        <circle cx="80" cy="110" r="35" class="node-circle type-eta"/>
+                        <text x="80" y="120" class="node-text">Η</text>
+                        <text x="80" y="95" class="node-label">Eta</text>
+                    </g>
+                    
+                    <!-- Connecting lines showing the cycle -->
+                    <path d="M 200 50 L 320 110 L 350 230 L 280 330 L 120 330 L 50 230 L 80 110 Z" 
+                          fill="none" stroke="rgba(52, 152, 219, 0.3)" stroke-width="2" stroke-dasharray="5,5"/>
+                </svg>
+                
+                <div class="cycle-explanation">
+                    <p>Each type is <strong>strong against</strong> the next type clockwise and <strong>weak against</strong> the previous type counter-clockwise</p>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">✨</span>
+                Team Synergies
+            </h2>
+            
+            <div class="synergy-info">
+                <p class="synergy-description">Combine specific Greek types to unlock powerful team bonuses!</p>
+            </div>
+
+            <div class="synergy-grid">
+                <div class="synergy-card synergy-attack">
+                    <div class="synergy-header">
+                        <span class="synergy-icon">⚔️</span>
+                        <h3>Attack Synergies</h3>
+                    </div>
+                    <div class="synergy-body">
+                        <div class="synergy-combo">
+                            <div class="combo-types">
+                                <span class="combo-badge type-alpha">Alpha</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-beta">Beta</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-gamma">Gamma</span>
+                            </div>
+                            <div class="combo-bonus">
+                                <span class="bonus-label">Attack Boost:</span>
+                                <span class="bonus-value">+10%</span>
+                            </div>
+                        </div>
+                        <div class="synergy-combo">
+                            <div class="combo-types">
+                                <span class="combo-badge type-delta">Delta</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-epsilon">Epsilon</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-zeta">Zeta</span>
+                            </div>
+                            <div class="combo-bonus">
+                                <span class="bonus-label">Attack Boost:</span>
+                                <span class="bonus-value">+15%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="synergy-card synergy-defense">
+                    <div class="synergy-header">
+                        <span class="synergy-icon">🛡️</span>
+                        <h3>Defense Synergies</h3>
+                    </div>
+                    <div class="synergy-body">
+                        <div class="synergy-combo">
+                            <div class="combo-types">
+                                <span class="combo-badge type-alpha">Alpha</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-gamma">Gamma</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-epsilon">Epsilon</span>
+                            </div>
+                            <div class="combo-bonus">
+                                <span class="bonus-label">Defense Boost:</span>
+                                <span class="bonus-value">+12%</span>
+                            </div>
+                        </div>
+                        <div class="synergy-combo">
+                            <div class="combo-types">
+                                <span class="combo-badge type-beta">Beta</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-delta">Delta</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-zeta">Zeta</span>
+                            </div>
+                            <div class="combo-bonus">
+                                <span class="bonus-label">Defense Boost:</span>
+                                <span class="bonus-value">+18%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="synergy-card synergy-health">
+                    <div class="synergy-header">
+                        <span class="synergy-icon">❤️</span>
+                        <h3>Health Synergies</h3>
+                    </div>
+                    <div class="synergy-body">
+                        <div class="synergy-combo">
+                            <div class="combo-types">
+                                <span class="combo-badge type-alpha">Alpha</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-delta">Delta</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-zeta">Zeta</span>
+                            </div>
+                            <div class="combo-bonus">
+                                <span class="bonus-label">Health Boost:</span>
+                                <span class="bonus-value">+20%</span>
+                            </div>
+                        </div>
+                        <div class="synergy-combo">
+                            <div class="combo-types">
+                                <span class="combo-badge type-beta">Beta</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-gamma">Gamma</span>
+                                <span class="combo-plus">+</span>
+                                <span class="combo-badge type-epsilon">Epsilon</span>
+                            </div>
+                            <div class="combo-bonus">
+                                <span class="bonus-label">Health Boost:</span>
+                                <span class="bonus-value">+25%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Detailed Type Matchups -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">📋</span>
+                Detailed Type Matchups
+            </h2>
+            
+            <div class="matchup-grid">
+                <div class="matchup-card type-alpha">
+                    <div class="matchup-header">
+                        <span class="greek-letter">Α</span>
+                        <h3>Alpha</h3>
+                    </div>
+                    <div class="matchup-body">
+                        <div class="matchup-row strong">
+                            <span class="matchup-icon">⚔️</span>
+                            <span>Strong vs: <strong>Beta</strong></span>
+                        </div>
+                        <div class="matchup-row weak">
+                            <span class="matchup-icon">🛡️</span>
+                            <span>Weak vs: <strong>Eta</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="matchup-card type-beta">
+                    <div class="matchup-header">
+                        <span class="greek-letter">Β</span>
+                        <h3>Beta</h3>
+                    </div>
+                    <div class="matchup-body">
+                        <div class="matchup-row strong">
+                            <span class="matchup-icon">⚔️</span>
+                            <span>Strong vs: <strong>Gamma</strong></span>
+                        </div>
+                        <div class="matchup-row weak">
+                            <span class="matchup-icon">🛡️</span>
+                            <span>Weak vs: <strong>Alpha</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="matchup-card type-gamma">
+                    <div class="matchup-header">
+                        <span class="greek-letter">Γ</span>
+                        <h3>Gamma</h3>
+                    </div>
+                    <div class="matchup-body">
+                        <div class="matchup-row strong">
+                            <span class="matchup-icon">⚔️</span>
+                            <span>Strong vs: <strong>Delta</strong></span>
+                        </div>
+                        <div class="matchup-row weak">
+                            <span class="matchup-icon">🛡️</span>
+                            <span>Weak vs: <strong>Beta</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="matchup-card type-delta">
+                    <div class="matchup-header">
+                        <span class="greek-letter">Δ</span>
+                        <h3>Delta</h3>
+                    </div>
+                    <div class="matchup-body">
+                        <div class="matchup-row strong">
+                            <span class="matchup-icon">⚔️</span>
+                            <span>Strong vs: <strong>Epsilon</strong></span>
+                        </div>
+                        <div class="matchup-row weak">
+                            <span class="matchup-icon">🛡️</span>
+                            <span>Weak vs: <strong>Gamma</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="matchup-card type-epsilon">
+                    <div class="matchup-header">
+                        <span class="greek-letter">Ε</span>
+                        <h3>Epsilon</h3>
+                    </div>
+                    <div class="matchup-body">
+                        <div class="matchup-row strong">
+                            <span class="matchup-icon">⚔️</span>
+                            <span>Strong vs: <strong>Zeta</strong></span>
+                        </div>
+                        <div class="matchup-row weak">
+                            <span class="matchup-icon">🛡️</span>
+                            <span>Weak vs: <strong>Delta</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="matchup-card type-zeta">
+                    <div class="matchup-header">
+                        <span class="greek-letter">Ζ</span>
+                        <h3>Zeta</h3>
+                    </div>
+                    <div class="matchup-body">
+                        <div class="matchup-row strong">
+                            <span class="matchup-icon">⚔️</span>
+                            <span>Strong vs: <strong>Eta</strong></span>
+                        </div>
+                        <div class="matchup-row weak">
+                            <span class="matchup-icon">🛡️</span>
+                            <span>Weak vs: <strong>Epsilon</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="matchup-card type-eta">
+                    <div class="matchup-header">
+                        <span class="greek-letter">Η</span>
+                        <h3>Eta</h3>
+                    </div>
+                    <div class="matchup-body">
+                        <div class="matchup-row strong">
+                            <span class="matchup-icon">⚔️</span>
+                            <span>Strong vs: <strong>Alpha</strong></span>
+                        </div>
+                        <div class="matchup-row weak">
+                            <span class="matchup-icon">🛡️</span>
+                            <span>Weak vs: <strong>Zeta</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Your Heroes by Type -->
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">⚔️</span>
+                Your Heroes by Type
+            </h2>
+            
+            {% for greek_type in ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta'] %}
+                {% set type_heroes = user_heroes | selectattr('greek_type', 'equalto', greek_type) | list %}
+                {% if type_heroes %}
+                    <div class="type-section">
+                        <h3 class="type-section-header type-{{ greek_type.lower() }}">
+                            {{ greek_type }} Heroes ({{ type_heroes | length }})
+                        </h3>
+                        <div class="heroes-grid">
+                            {% for hero in type_heroes %}
+                                <div class="hero-card {{ hero.rarity.lower() }}">
+                                    {% if hero.image %}
+                                        <img src="{{ hero.image }}" alt="{{ hero.name }}" class="hero-image">
+                                    {% else %}
+                                        <div class="hero-image">🛡️</div>
+                                    {% endif %}
+                                    <div class="hero-info">
+                                        <div class="hero-name">{{ hero.name }}</div>
+                                        <div class="hero-description">{{ hero.description }}</div>
+                                        <div class="hero-tags">
+                                            <span class="hero-rarity rarity-{{ hero.rarity.lower() }}">{{ hero.rarity }}</span>
+                                            <span class="hero-type type-{{ hero.greek_type.lower() }}">{{ hero.greek_type }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+            
+            {% if not user_heroes %}
+                <div class="empty-state">
+                    <div class="empty-icon">⚔️</div>
+                    <h3>No Heroes Yet</h3>
+                    <p>Start collecting heroes to see them organized by type!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="back-section">
+        <a href="{{ url_for('hero_index') }}" class="btn btn-back">← Back to Hero Index</a>
+    </div>
+     <script>
+        // Type matchup system - clockwise advantage
+        const typeOrder = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta'];
+
+        const typePositions = {
+            'alpha': {x: 200, y: 50},
+            'beta': {x: 320, y: 110},
+            'gamma': {x: 350, y: 230},
+            'delta': {x: 280, y: 330},
+            'epsilon': {x: 120, y: 330},
+            'zeta': {x: 50, y: 230},
+            'eta': {x: 80, y: 110}
+        };
+        
+        function getStrongAgainst(type) {
+            const index = typeOrder.indexOf(type);
+            return typeOrder[(index + 1) % 7]; // Next in cycle
+        }
+        
+        function getWeakAgainst(type) {
+            const index = typeOrder.indexOf(type);
+            return typeOrder[(index - 1 + 7) % 7]; // Previous in cycle
+        }
+
+        function drawArrow(fromType, toType, isStrong) {
+            const from = typePositions[fromType];
+            const to = typePositions[toType];
+            
+            // Calculate direction vector
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Normalize and shorten to account for circle radius (35)
+            const shortenBy = 40; // slightly more than circle radius
+            const startX = from.x + (dx / distance) * shortenBy;
+            const startY = from.y + (dy / distance) * shortenBy;
+            const endX = to.x - (dx / distance) * shortenBy;
+            const endY = to.y - (dy / distance) * shortenBy;
+            
+            // Create curved path for better visibility
+            const controlX = (startX + endX) / 2 + (endY - startY) * 0.1;
+            const controlY = (startY + endY) / 2 - (endX - startX) * 0.1;
+            
+            return `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
+        }
+        
+        // Get all type nodes
+        const typeNodes = document.querySelectorAll('.type-node');
+        const arrowGroup = document.getElementById('advantage-arrows');
+        const strongArrow = document.getElementById('strong-arrow');
+        const weakArrow = document.getElementById('weak-arrow');
+        
+        typeNodes.forEach(node => {
+            const circle = node.querySelector('.node-circle');
+            const type = node.dataset.type;
+            
+            node.addEventListener('mouseenter', function() {
+                const strongAgainst = getStrongAgainst(type);
+                const weakAgainst = getWeakAgainst(type);
+                
+                // Draw arrows
+                strongArrow.setAttribute('d', drawArrow(type, strongAgainst, true));
+                weakArrow.setAttribute('d', drawArrow(type, weakAgainst, false));
+                arrowGroup.style.opacity = '1';
+                
+                // Reset all nodes and apply hover effects
+                typeNodes.forEach(otherNode => {
+                    const otherCircle = otherNode.querySelector('.node-circle');
+                    const otherType = otherNode.dataset.type;
+                    
+                    if (otherType === strongAgainst) {
+                        // Strong against - green
+                        otherCircle.style.fill = '#27ae60';
+                        otherCircle.style.stroke = '#229954';
+                    } else if (otherType === weakAgainst) {
+                        // Weak against - red
+                        otherCircle.style.fill = '#e74c3c';
+                        otherCircle.style.stroke = '#c0392b';
+                    } else if (otherType !== type) {
+                        // Others - gray
+                        otherCircle.style.fill = '#95a5a6';
+                        otherCircle.style.stroke = '#7f8c8d';
+                    }
+                });
+            });
+            
+            node.addEventListener('mouseleave', function() {
+                // Hide arrows
+                arrowGroup.style.opacity = '0';
+                
+                // Reset all to original colors
+                typeNodes.forEach(otherNode => {
+                    const otherCircle = otherNode.querySelector('.node-circle');
+                    otherCircle.style.fill = '';
+                    otherCircle.style.stroke = '';
+                });
+            });
+        });
+    </script>
+{% endblock %}

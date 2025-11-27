@@ -20,7 +20,7 @@
             </div>
             <div class="progress-bar">
             {% if all_heroes|length > 0 %}
-                <!--<div class="progress-fill" style="width: {{ (user_heroes|length / all_heroes|length * 100)|round(1) }}%"></div> -->
+                <div class="progress-fill" style="width: {{ (user_heroes|length / all_heroes|length * 100)|round(1) }}%"></div>
             {% else %}
                 <div class="progress-fill" style="width: 0%"></div>
             {% endif %}
@@ -56,6 +56,7 @@
                 <div class="heroes-rarity-grid">
                     {% for hero in heroes_by_rarity[rarity]|sort(attribute='name') %}
                         {% set is_owned = hero in user_heroes %}
+                        {% set ever_owned = hero in user_hero_history%}
                         <div class="hero-index-card {{ hero.rarity.lower() }} {% if not is_owned %}unowned{% endif %}" 
                              data-owned="{{ 'true' if is_owned else 'false' }}" 
                              data-rarity="{{ hero.rarity.lower() }}">
@@ -82,9 +83,8 @@
                                     {{ hero.description if is_owned else 'Collect this hero to reveal its description!' }}
                                 </div>
 
-                                {# Stacked stats: shown only when owned, keep placeholder when not owned #}
-                                <div class="hero-stats">
-                                    {% if is_owned %}
+                                {% if is_owned %}
+                                    <div class="hero-stats">
                                         <div class="stat-row">
                                             <span class="stat-label">⚔️ Attack</span>
                                             <span class="stat-value">{{ hero.base_attack }}</span>
@@ -101,21 +101,10 @@
                                             <span class="stat-label">🏛️ Type</span>
                                             <span class="stat-value">{{ hero.greek_type }}</span>
                                         </div>
-                                    {% else %}
-                                        <div class="stat-row">
-                                            <span class="stat-label">⚔️ Attack</span>
-                                            <span class="stat-value">—</span>
-                                        </div>
-                                        <div class="stat-row">
-                                            <span class="stat-label">❤ Health</span>
-                                            <span class="stat-value">—</span>
-                                        </div>
-                                        <div class="stat-row">
-                                            <span class="stat-label">🛡️ Defense</span>
-                                            <span class="stat-value">—</span>
-                                        </div>
-                                    {% endif %}
-                                </div>
+                                    </div>
+                                {% elif ever_owned %}
+                                    <div class="hero-description"><strong>Previously collected</strong></div>
+                                {% endif %}
 
                                 <span class="hero-rarity rarity-{{ hero.rarity.lower() }}">{{ hero.rarity }}</span>
                             </div>
@@ -131,6 +120,8 @@
         <div class="back-section">
             <a href="{{ url_for('dashboard') }}" class="btn btn-back">← Back to Dashboard</a>
         </div>
+        <div class="back-section">
+            <a href="{{ url_for('type_index') }}" class="btn btn-success">🎲 Go to Type Index</a>
     </div>
 
     <!-- Flash Messages -->

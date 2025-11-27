@@ -3,153 +3,203 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='achievement.css') }}">
+{% set unlocked_count = user_achievements|length %}
+{% set total_count = all_achievements|length %}
+{% set overall_progress = 0 %}
+{% if total_count > 0 %}
+    {% set overall_progress = ((unlocked_count / total_count) * 100) | round(0, 'floor') %}
+{% endif %}
 
-
-    <div class="container">
-        <div class="achievements-header">
-            <h1 class="achievements-title">🏆 Achievements</h1>
-            <p class="achievements-subtitle">Track your progress and unlock rewards!</p>
-            
-            <div class="achievement-stats">
-                <div class="stat-item">
-                    <span class="stat-number">{{ user_achievements|length }}</span>
-                    <span class="stat-label">Unlocked</span>
-                </div>
-                <div class="stat-divider">/</div>
-                <div class="stat-item">
-                    <span class="stat-number">{{ all_achievements|length }}</span>
-                    <span class="stat-label">Total</span>
-                </div>
-                <div class="progress-bar">
-                </div>
+<div class="container">
+    <div class="achievements-header">
+        <h1 class="achievements-title">Achievements</h1>
+        <p class="achievements-subtitle">Track your progress and unlock rewards!</p>
+        
+        <div class="achievement-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ unlocked_count }}</span>
+                <span class="stat-label">Unlocked</span>
             </div>
-        </div>
-
-        <!-- Check Achievements Button -->
-        <div class="check-section">
-            <form method="POST" action="{{ url_for('check_achievements') }}">
-                <button type="submit" class="btn-check-achievements">
-                    <span class="check-icon">🔍</span>
-                    Check New Achievements
-                </button>
-            </form>
-        </div>
-
-        <!-- Achievements Grid -->
-        <div class="achievements-section">
-            <div class="achievements-grid">
-                {% for achievement in all_achievements %}
-                    {% set is_unlocked = achievement.id in user_achievement_ids %}
-                    <div class="achievement-card {% if not is_unlocked %}locked{% endif %} difficulty-{{ achievement.difficulty.lower() }}" 
-                         data-difficulty="{{ achievement.difficulty.lower() }}" 
-                         data-status="{% if is_unlocked %}unlocked{% else %}locked{% endif %}">
-                        
-                        <!-- Achievement Icon -->
-                        <div class="achievement-icon">
-                            {% if is_unlocked %}
-                                <span class="trophy-icon">🏆</span>
-                            {% else %}
-                                <span class="locked-icon">🔒</span>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Achievement Content -->
-                        <div class="achievement-content">
-                            <div class="achievement-name">
-                                {% if is_unlocked %}
-                                    {{ achievement.name }}
-                                {% else %}
-                                    <span class="hidden-text">???</span>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="achievement-description">
-                                {% if is_unlocked %}
-                                    {{ achievement.description }}
-                                {% else %}
-                                    <span class="hidden-description">Complete this achievement to unlock!</span>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="achievement-condition">
-                                {% if is_unlocked %}
-                                    <span class="condition-text">{{ achievement.condition }}</span>
-                                {% else %}
-                                    <span class="hidden-condition">{{ achievement.condition }}</span>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="achievement-difficulty difficulty-{{ achievement.difficulty.lower() }}">
-                                {{ achievement.difficulty }}
-                            </div>
-                        </div>
-                        
-                        <!-- Completion Status -->
-                        <div class="achievement-status">
-                            {% if is_unlocked %}
-                                <span class="status-completed">✓ Completed</span>
-                            {% else %}
-                                <span class="status-locked">Locked</span>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Unlock Animation Overlay -->
-                        {% if is_unlocked %}
-                            <div class="unlock-glow"></div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+            <div class="stat-divider">/</div>
+            <div class="stat-item">
+                <span class="stat-number">{{ total_count }}</span>
+                <span class="stat-label">Total</span>
             </div>
-            
-            <!-- Empty State -->
-            {% if not all_achievements %}
-                <div class="empty-state">
-                    <div class="empty-icon">🏆</div>
-                    <h3>No Achievements Yet</h3>
-                    <p>Achievements will appear here as they're added to the game!</p>
-                </div>
-            {% endif %}
-
-    <!-- Achievement Unlock Notification -->
-    <div id="achievement-notification" class="achievement-notification">
-        <div class="notification-content">
-            <div class="notification-icon">🏆</div>
-            <div class="notification-text">
-                <div class="notification-title">Achievement Unlocked!</div>
-                <div class="notification-name" id="unlocked-name"></div>
+            <div class="progress-bar" aria-label="Overall achievement progress">
+                <div class="progress-fill" style="width: {{ overall_progress }}%;"></div>
             </div>
-            <button class="notification-close" onclick="closeNotification()">×</button>
+            <div class="progress-percent">{{ overall_progress }}%</div>
         </div>
     </div>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash-message flash-{{ category }}">
-                        {{ message }}
-                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
+    <!-- Check Achievements Button -->
+    <div class="check-section">
+        <form method="POST" action="{{ url_for('check_achievements') }}">
+            <button type="submit" class="btn-check-achievements">
+                <span class="check-icon">?</span>
+                Check New Achievements
+            </button>
+        </form>
+    </div>
+
+    <!-- Achievements Grid -->
+    <div class="achievements-section">
+        <div class="achievements-grid">
+            {% for achievement in all_achievements %}
+                {% set is_unlocked = achievement.id in user_achievement_ids %}
+                {% set target_value = achievement.value | int %}
+                {% if achievement.type == "goku" and target_value == 0 %}
+                    {% set target_value = 1 %}
+                {% endif %}
+                {% if achievement.type == "hero_collection" %}
+                    {% set current_value = current_user.heroes | length %}
+                {% elif achievement.type == "roll_count" %}
+                    {% set current_value = current_user.rolls_done %}
+                {% elif achievement.type == "tokens_spent" %}
+                    {% set current_value = current_user.tokens_spent %}
+                {% elif achievement.type == "goku" %}
+                    {% set current_value = 1 if current_user.heroes | selectattr('name', 'equalto', 'Goku') | list | length > 0 else 0 %}
+                {% else %}
+                    {% set current_value = 0 %}
+                {% endif %}
+                {% if target_value > 0 %}
+                    {% set progress_percent = (current_value / target_value * 100) | round(0, 'floor') %}
+                {% else %}
+                    {% set progress_percent = 0 %}
+                {% endif %}
+                {% if is_unlocked %}
+                    {% set progress_percent = 100 %}
+                {% elif progress_percent > 100 %}
+                    {% set progress_percent = 100 %}
+                {% endif %}
+
+                <div class="achievement-card {% if not is_unlocked %}locked{% endif %} difficulty-{{ achievement.difficulty.lower() }}" 
+                     data-difficulty="{{ achievement.difficulty.lower() }}" 
+                     data-status="{% if is_unlocked %}unlocked{% else %}locked{% endif %}">
+                    
+                    <!-- Achievement Icon -->
+                    <div class="achievement-icon">
+                        {% if is_unlocked %}
+                            <span class="trophy-icon">✅</span>
+                        {% else %}
+                            <span class="locked-icon">❌</span>
+                        {% endif %}
                     </div>
-                {% endfor %}
+                    
+                    <!-- Achievement Content -->
+                    <div class="achievement-content">
+                        <div class="achievement-name">
+                            {% if is_unlocked %}
+                                {{ achievement.name }}
+                            {% else %}
+                                <span class="hidden-text">???</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="achievement-description">
+                            {% if is_unlocked %}
+                                {{ achievement.description }}
+                            {% else %}
+                                <span class="hidden-description">Complete this achievement to unlock!</span>
+                            {% endif %}
+                        </div>
+                        
+                        
+                        <div class="achievement-difficulty difficulty-{{ achievement.difficulty.lower() }}">
+                            {{ achievement.difficulty }}
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-progress">
+                        <div class="progress-meta">
+                            <span class="progress-label">{% if is_unlocked %}Completed{% else %}Progress{% endif %}</span>
+                            {% if target_value > 0 %}
+                                <span class="progress-count">{{ current_value }}/{{ target_value }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ progress_percent }}%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Completion Status -->
+                    <div class="achievement-status">
+                        {% if is_unlocked %}
+                            <span class="status-completed">Completed</span>
+                        {% else %}
+                            <span class="status-locked">Locked</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Unlock Animation Overlay -->
+                    {% if is_unlocked %}
+                        <div class="unlock-glow"></div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Empty State -->
+        {% if not all_achievements %}
+            <div class="empty-state">
+                <div class="empty-icon">✅</div>
+                <h3>No Achievements Yet</h3>
+                <p>Achievements will appear here as they're added to the game!</p>
             </div>
         {% endif %}
-    {% endwith %}
-{% endblock %}
+    </div>
+</div>
+
+<!-- Achievement Unlock Notification -->
+<div id="achievement-notification" class="achievement-notification">
+    <div class="notification-content">
+        <div class="notification-icon">✅</div>
+        <div class="notification-text">
+            <div class="notification-title">Achievement Unlocked!</div>
+            <div class="notification-name" id="unlocked-name"></div>
+        </div>
+        <button class="notification-close" onclick="closeNotification(event)">A-</button>
+    </div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">
+                    {{ message }}
+                    <button class="flash-close" onclick="this.parentElement.style.display='none'">A-</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
 
 <script>
-function closeNotification() {
-    // Option A: If the button is directly inside the notification
-    event.target.parentElement.style.display = 'none';
-       function filterAchievements(filter) {
+    (function() {
+        const notification = document.getElementById('achievement-notification');
+
+        window.closeNotification = function(evt) {
+            if (evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+            }
+            if (notification) {
+                notification.classList.remove('show');
+                notification.style.top = '-100px';
+            }
+        };
+
+        window.filterAchievements = function(filter, trigger) {
             const cards = document.querySelectorAll('.achievement-card');
             const filterBtns = document.querySelectorAll('.filter-btn');
             
-            // Update active filter button
             filterBtns.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (trigger) {
+                trigger.classList.add('active');
+            }
             
-            // Show/hide achievement cards
             cards.forEach(card => {
                 let show = true;
                 
@@ -163,16 +213,18 @@ function closeNotification() {
                 
                 card.style.display = show ? 'block' : 'none';
             });
-        }
+        };
         
-        function showAchievementNotification(name) {
-            document.getElementById('unlocked-name').textContent = name;
-            document.getElementById('achievement-notification').classList.add('show');
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                closeNotification();
-            }, 5000);
-        }
-    }
+        window.showAchievementNotification = function(name) {
+            const nameEl = document.getElementById('unlocked-name');
+            if (nameEl) {
+                nameEl.textContent = name;
+            }
+            if (notification) {
+                notification.classList.add('show');
+                setTimeout(() => closeNotification(), 5000);
+            }
+        };
+    })();
 </script>
+{% endblock %}

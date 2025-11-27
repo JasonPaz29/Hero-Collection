@@ -102,14 +102,15 @@
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div style="position: fixed; top: 100px; right: 20px; z-index: 1000;">
+            <div class="flash-messages">
                 {% for category, message in messages %}
-                    <div>
-                        <div class="flash-message">{{ message }}</div>
-                        <button onclick="this.parentElement.style.display='none'" style="background: none; border: none; color: white; float: right; cursor: pointer; font-size: 1.2rem; margin-left: 1rem;">×</button>
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
-    {% endwith %}
+    {% endwith %}    
+
 {% endblock %}

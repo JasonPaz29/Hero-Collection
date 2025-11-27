@@ -17,7 +17,7 @@
             </h2>
             
             {% if user_heroes %}
-                <div class="heroes-grid">
+                <div class="heroes-grid" id="myHeroesGrid">
                     {% for hero in user_heroes %}
                         <div class="hero-card {{ hero.rarity.lower() }} selectable-hero" data-hero-id="{{ hero.id }}" data-hero-name="{{ hero.name }}">
                             {% if hero.image %}
@@ -35,6 +35,11 @@
                             </div>
                         </div>
                     {% endfor %}
+                </div>
+                <div class="pagination-controls" id="myHeroesPagination" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 12px;">
+                    <button type="button" class="btn btn-secondary btn-sm page-prev">Previous</button>
+                    <span class="page-info" aria-live="polite"></span>
+                    <button type="button" class="btn btn-secondary btn-sm page-next">Next</button>
                 </div>
             {% else %}
                 <div class="empty-state">
@@ -84,6 +89,11 @@
                             </div>
                         </div>
                     {% endfor %}
+                </div>
+                <div class="pagination-controls" id="otherHeroesPagination" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 12px;">
+                    <button type="button" class="btn btn-secondary btn-sm page-prev">Previous</button>
+                    <span class="page-info" aria-live="polite"></span>
+                    <button type="button" class="btn btn-secondary btn-sm page-next">Next</button>
                 </div>
             {% else %}
                 <div class="empty-state">
@@ -250,6 +260,14 @@
     <script>
         let selectedMyHero = null;
         let selectedTheirHero = null;
+        const PAGE_SIZE = 6;
+        let myHeroesPage = 1;
+        let otherHeroesPage = 1;
+
+        const myHeroCards = Array.from(document.querySelectorAll('.selectable-hero'));
+        const otherHeroCards = Array.from(document.querySelectorAll('.selectable-target'));
+        const myPagination = document.getElementById('myHeroesPagination');
+        const otherPagination = document.getElementById('otherHeroesPagination');
         
         // Handle hero selection
         document.querySelectorAll('.selectable-hero').forEach(card => {
@@ -285,6 +303,46 @@
                 updateTradeProposal();
             });
         });
+
+        // Generic pagination helper
+        function applyPagination(cards, page, pageSize, paginationEl, respectFilter = false) {
+            const eligibleCards = respectFilter ? cards.filter(card => card.dataset.matchesFilter !== 'false') : cards;
+            const eligibleCount = eligibleCards.length;
+            const totalPages = eligibleCount ? Math.ceil(eligibleCount / pageSize) : 1;
+            const safePage = Math.min(Math.max(page, 1), totalPages);
+            const start = (safePage - 1) * pageSize;
+            
+            eligibleCards.forEach((card, index) => {
+                card.style.display = (index >= start && index < start + pageSize) ? '' : 'none';
+            });
+            if (respectFilter) {
+                cards.filter(card => card.dataset.matchesFilter === 'false').forEach(card => card.style.display = 'none');
+            }
+
+            if (paginationEl) {
+                const info = paginationEl.querySelector('.page-info');
+                const prevBtn = paginationEl.querySelector('.page-prev');
+                const nextBtn = paginationEl.querySelector('.page-next');
+                info.textContent = eligibleCount ? `${safePage} / ${totalPages}` : '0 / 0';
+                prevBtn.disabled = safePage <= 1 || !eligibleCount;
+                nextBtn.disabled = safePage >= totalPages || !eligibleCount;
+                paginationEl.style.display = cards.length ? 'flex' : 'none';
+            }
+            return safePage;
+        }
+
+        // Initialize and wire up pagination for user's heroes
+        if (myHeroCards.length && myPagination) {
+            myHeroesPage = applyPagination(myHeroCards, myHeroesPage, PAGE_SIZE, myPagination);
+            myPagination.querySelector('.page-prev').addEventListener('click', function() {
+                myHeroesPage = applyPagination(myHeroCards, myHeroesPage - 1, PAGE_SIZE, myPagination);
+            });
+            myPagination.querySelector('.page-next').addEventListener('click', function() {
+                myHeroesPage = applyPagination(myHeroCards, myHeroesPage + 1, PAGE_SIZE, myPagination);
+            });
+        } else if (myPagination) {
+            myPagination.style.display = 'none';
+        }
         
         function updateTradeProposal() {
             const proposal = document.getElementById('tradeProposal');
@@ -322,36 +380,42 @@
             document.querySelectorAll('.selected').forEach(card => card.classList.remove('selected'));
             document.getElementById('tradeProposal').style.display = 'none';
         });
-        
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const cards = document.querySelectorAll('.other-hero-card');
-            
-            cards.forEach(card => {
+
+        // Other heroes pagination + filters
+        otherHeroCards.forEach(card => {
+            card.dataset.matchesFilter = 'true';
+        });
+
+        function filterOtherHeroes() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedRarity = document.getElementById('rarityFilter').value;
+
+            otherHeroCards.forEach(card => {
                 const heroName = card.dataset.hero.toLowerCase();
                 const ownerName = card.dataset.owner.toLowerCase();
-                
-                if (heroName.includes(searchTerm) || ownerName.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+                const matchesSearch = heroName.includes(searchTerm) || ownerName.includes(searchTerm);
+                const matchesRarity = !selectedRarity || card.dataset.rarity === selectedRarity;
+                const matches = matchesSearch && matchesRarity;
+                card.dataset.matchesFilter = matches ? 'true' : 'false';
             });
-        });
-        
-        // Rarity filter
-        document.getElementById('rarityFilter').addEventListener('change', function() {
-            const selectedRarity = this.value;
-            const cards = document.querySelectorAll('.other-hero-card');
-            
-            cards.forEach(card => {
-                if (!selectedRarity || card.dataset.rarity === selectedRarity) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+
+            otherHeroesPage = 1;
+            otherHeroesPage = applyPagination(otherHeroCards, otherHeroesPage, PAGE_SIZE, otherPagination, true);
+        }
+
+        if (otherPagination) {
+            otherHeroesPage = applyPagination(otherHeroCards, otherHeroesPage, PAGE_SIZE, otherPagination, true);
+            otherPagination.querySelector('.page-prev').addEventListener('click', function() {
+                otherHeroesPage = applyPagination(otherHeroCards, otherHeroesPage - 1, PAGE_SIZE, otherPagination, true);
             });
-        });
+            otherPagination.querySelector('.page-next').addEventListener('click', function() {
+                otherHeroesPage = applyPagination(otherHeroCards, otherHeroesPage + 1, PAGE_SIZE, otherPagination, true);
+            });
+        }
+
+        // Search and filter handlers
+        document.getElementById('searchInput').addEventListener('input', filterOtherHeroes);
+        document.getElementById('rarityFilter').addEventListener('change', filterOtherHeroes);
+        filterOtherHeroes();
     </script>
 {% endblock %}

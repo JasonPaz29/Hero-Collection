@@ -1,6 +1,11 @@
 from flask_login import current_user, login_required
 team_synergies = {
     ("alpha", "beta", "gamma"): {"attack_boost": 1.10},
+    ("delta", "epsilon", "zeta"): {"attack_boost": 1.15},
+    ("alpha", "gamma", "epsilon"): {"defense_boost": 1.12},
+    ("beta", "delta", "zeta"): {"defense_boost": 1.18},
+    ("alpha", "delta", "zeta"): {"health_boost": 1.20},
+    ("beta", "gamma", "epsilon"): {"health_boost": 1.25},
 }
 
 
