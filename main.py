@@ -505,6 +505,7 @@ def perform_roll():
             current_user.tokens += 50
             flash("You got 50 tokens!", "dupe")
         db.session.commit()
+    check_achievements()
     return redirect(url_for('roll'))
 
 @app.route('/achievements')
@@ -522,57 +523,44 @@ def achievements():
         newly_unlocked_achievements=newly_unlocked_achievements
     )
 
-@app.route('/check_achievements', methods=['POST'])
-@login_required
 def check_achievements():
-    allAchievements = Achievement.query.all()
+    all_achievements = Achievement.query.all()
     amount_of_heroes = len(current_user.heroes)
+    obtained_any = False
 
-    for achievement in allAchievements:
+    def unlock(achievement):
+        nonlocal obtained_any
+        current_user.achievements.append(achievement)
+        obtained_any = True
+
+    for achievement in all_achievements:
         if achievement in current_user.achievements:
-            pass
-        else:
-            if achievement.type == "hero_collection":
-                if achievement.value == 1 and amount_of_heroes >= 1:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 5 and amount_of_heroes >= 5:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 10 and amount_of_heroes >= 10:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 20 and amount_of_heroes >= 20:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 25 and amount_of_heroes >= 25:
-                    current_user.achievements.append(achievement)
-            elif achievement.type == "roll_count":
-                if achievement.value == 1 and current_user.rolls_done >= 1:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 10 and current_user.rolls_done >= 10:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 25 and current_user.rolls_done >= 25:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 50 and current_user.rolls_done >= 50:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 100 and current_user.rolls_done >= 100:
-                    current_user.achievements.append(achievement)
-            elif achievement.type == "tokens_spent":
-                if achievement.value == 10 and current_user.tokens_spent >= 10:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 25 and current_user.tokens_spent >= 25:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 50 and current_user.tokens_spent >= 50:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 100 and current_user.tokens_spent >= 100:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 250 and current_user.tokens_spent >= 250:
-                    current_user.achievements.append(achievement)
-                elif achievement.value == 500 and current_user.tokens_spent >= 500:
-                    current_user.achievements.append(achievement)
-            elif achievement.type == "goku":
-                for hero in current_user.heroes:
-                    if hero.name == 'Goku':
-                        current_user.achievements.append(achievement)
-            db.session.commit()
-    return redirect(url_for('achievements'))
+            continue
+
+        if achievement.type == "hero_collection":
+            if amount_of_heroes >= achievement.value:
+                unlock(achievement)
+
+        elif achievement.type == "roll_count":
+            if current_user.rolls_done >= achievement.value:
+                unlock(achievement)
+
+        elif achievement.type == "tokens_spent":
+            if current_user.tokens_spent >= achievement.value:
+                unlock(achievement)
+
+        elif achievement.type == "goku":
+            if any(hero.name == "Goku" for hero in current_user.heroes):
+                unlock(achievement)
+
+    if obtained_any:
+        db.session.commit()
+        flash("You have unlocked an achievement!", "success")
+
+    return
+
+                
+    
 
 @app.route('/hero_index')
 @login_required
