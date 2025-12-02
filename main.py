@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import random
 from datetime import timedelta, datetime
 import schedule
+from battle_logic import simulate_battle, BattleResult
 
 app = Flask(__name__)
 
@@ -43,6 +44,8 @@ class User(db.Model, UserMixin):
     last_daily_claim = db.Column(db.DateTime, default=datetime.utcnow)
     security_question = db.Column(db.String(200), nullable=True)
     security_answer_hash = db.Column(db.String(200), nullable=True)
+    battle_wins = db.Column(db.Integer, default=0)
+    battle_losses = db.Column(db.Integer, default=0)
 
 
     heroes = db.relationship('Hero', secondary=user_heroes, backref="owners")
@@ -82,6 +85,43 @@ class Trade(db.Model):
     receiver = db.relationship("User", foreign_keys=[receiver_id])
     offered_hero = db.relationship("Hero", foreign_keys=[offeredHero_id])
     requested_hero = db.relationship("Hero", foreign_keys=[requestedHero_id])
+
+class LineUp(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    hero_1 = db.Column(db.Integer, db.ForeignKey('hero.id'), nullable=True)
+    hero_2 = db.Column(db.Integer, db.ForeignKey('hero.id'), nullable=True)
+    hero_3 = db.Column(db.Integer, db.ForeignKey('hero.id'), nullable=True)
+
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    is_queued = db.Column(db.Boolean, default=False)       
+    is_challenger = db.Column(db.Boolean, default=False)    
+
+    last_battle_log = db.Column(db.Text, nullable=True)
+    last_battle_winner = db.Column(db.String(50), nullable=True)
+    last_battle_loser = db.Column(db.String(50), nullable=True)
+    last_battle_unseen = db.Column(db.Boolean, default=False)
+
+    hero1 = db.relationship("Hero", foreign_keys=[hero_1])
+    hero2 = db.relationship("Hero", foreign_keys=[hero_2])
+    hero3 = db.relationship("Hero", foreign_keys=[hero_3])
+
+class CombatHero:
+    def __init__(self, hero):
+        self.id = hero.id
+        self.name = hero.name
+        self.greek_type = hero.greek_type
+        self.base_hp = hero.base_hp
+        self.base_attack = hero.base_attack
+        self.base_defense = hero.base_defense
+        self.attack = hero.base_attack
+        self.defense = hero.base_defense
+        self.health = hero.base_hp
+
+    def basehp(self):
+        return self.base_hp
 
 
 @login_manager.user_loader
@@ -562,7 +602,7 @@ def check_achievements():
                 
     
 
-@app.route('/hero_index')
+@app.route('/hero_index', methods=['GET'])
 @login_required
 def hero_index():
     user_heroes = current_user.heroes
@@ -570,13 +610,170 @@ def hero_index():
     all_heroes = Hero.query.all()
     return render_template("hero_index.html", user_heroes=user_heroes, all_heroes=all_heroes, user_hero_history=user_hero_history)
 
-@app.route('/type_index')
+@app.route('/type_index', methods=['GET'])
 @login_required
 def type_index():
     user_heroes = current_user.heroes
     all_heroes = Hero.query.all()
     greek_types = set(hero.greek_type for hero in all_heroes if hero.greek_type)
     return render_template("type_index.html", user_heroes=user_heroes, all_heroes=all_heroes, greek_types=greek_types)
+
+@app.route("/arena", methods=['GET', 'POST'])
+@login_required
+def arena():
+    roster = list(current_user.heroes)
+    queued_lineup = LineUp.query.filter_by(is_queued=True).order_by(LineUp.timestamp.desc()).first()
+    queued_owner = User.query.get(queued_lineup.user_id) if queued_lineup else None
+    queued_heroes = [queued_lineup.hero1, queued_lineup.hero2, queued_lineup.hero3] if queued_lineup else []
+    users_queued_lineups = LineUp.query.filter_by(is_queued=False, user_id=current_user.id).order_by(LineUp.timestamp.desc()).first()
+
+    if users_queued_lineups and users_queued_lineups.last_battle_unseen:
+        battle_log = []
+        if users_queued_lineups.last_battle_log:
+            battle_log = users_queued_lineups.last_battle_log.split("\n")
+        battle_result = BattleResult(
+            users_queued_lineups.last_battle_winner,
+            users_queued_lineups.last_battle_loser,
+            battle_log
+        )
+        users_queued_lineups.last_battle_unseen = False
+        db.session.commit()
+        return render_template("battle_result.html", battle_result=battle_result, battle_log=battle_log, team_a=None, team_b=None)
+            
+
+    if request.method == 'POST':
+        intent = request.form.get('intent')
+
+        if intent == 'queue':
+            hero_ids = [request.form.get('team_a_hero1'), request.form.get('team_a_hero2'), request.form.get('team_a_hero3')]
+            if not all(hero_ids):
+                flash("Select three heroes to queue.", "warning")
+                return redirect(url_for('arena'))
+
+            hero_ids = [int(hid) for hid in hero_ids]
+            if len(set(hero_ids)) < 3:
+                flash("Use different heroes in each slot.", "warning")
+                return redirect(url_for('arena'))
+
+            owned_ids = {hero.id for hero in roster}
+            if not set(hero_ids).issubset(owned_ids):
+                flash("You can only queue heroes you own.", "danger")
+                return redirect(url_for('arena'))
+
+            if LineUp.query.filter_by(is_queued=True).first():
+                flash("There is already a lineup queued in the arena! Challenge them or wait!", "warning")
+                return redirect(url_for('arena'))
+
+            LineUp.query.filter_by(is_queued=True).update({"is_queued": False})
+            new_lineup = LineUp(
+                user_id=current_user.id,
+                hero_1=hero_ids[0],
+                hero_2=hero_ids[1],
+                hero_3=hero_ids[2],
+                is_queued=True,
+                is_challenger=False,
+                timestamp=datetime.utcnow()
+            )
+            db.session.add(new_lineup)
+            db.session.commit()
+            flash("Your lineup is now waiting in the arena.", "success")
+            return redirect(url_for('arena'))
+
+        elif intent == 'challenge':
+            if not queued_lineup:
+                flash("No lineup is currently queued to challenge.", "warning")
+                return redirect(url_for('arena'))
+
+            challenger_ids = [request.form.get('team_b_hero1'), request.form.get('team_b_hero2'), request.form.get('team_b_hero3')]
+            if not all(challenger_ids):
+                flash("Select three heroes to challenge with.", "warning")
+                return redirect(url_for('arena'))
+
+            challenger_ids = [int(hid) for hid in challenger_ids]
+            if len(set(challenger_ids)) < 3:
+                flash("Use different heroes in each challenger slot.", "warning")
+                return redirect(url_for('arena'))
+
+            owned_ids = {hero.id for hero in roster}
+            if not set(challenger_ids).issubset(owned_ids):
+                flash("You can only challenge with heroes you own.", "danger")
+                return redirect(url_for('arena'))
+
+            team_a_models = [queued_lineup.hero1, queued_lineup.hero2, queued_lineup.hero3]
+            if not all(team_a_models):
+                flash("The queued lineup is incomplete.", "warning")
+                return redirect(url_for('arena'))
+
+            team_b_models = [Hero.query.get(hid) for hid in challenger_ids]
+            if not all(team_b_models):
+                flash("One of the selected challenger heroes could not be found.", "danger")
+                return redirect(url_for('arena'))
+
+            team_a = [CombatHero(hero) for hero in team_a_models]
+            team_b = [CombatHero(hero) for hero in team_b_models]
+            raw_result = simulate_battle(team_a, team_b, queued_owner.username, current_user.username)
+
+            winner_name = queued_owner.username if raw_result.winner == queued_owner.username else current_user.username
+            loser_name = current_user.username if raw_result.winner == queued_owner.username else queued_owner.username
+            result = BattleResult(winner_name, loser_name, raw_result.log)
+
+            if winner_name == queued_owner.username:
+                queued_owner.battle_wins += 1
+                current_user.battle_losses += 1
+            else:
+                current_user.battle_wins += 1
+                queued_owner.battle_losses += 1
+
+            queued_lineup.last_battle_log = "\n".join(raw_result.log)
+            queued_lineup.last_battle_winner = winner_name
+            queued_lineup.last_battle_loser = loser_name
+            queued_lineup.last_battle_unseen = True
+
+            team_a_state = [{
+                "name": hero.name,
+                "greek_type": hero.greek_type,
+                "hp": max(hero.health, 0),
+                "base_hp": hero.base_hp,
+                "attack": hero.attack,
+                "defense": hero.defense
+            } for hero in team_a]
+
+            team_b_state = [{
+                "name": hero.name,
+                "greek_type": hero.greek_type,
+                "hp": max(hero.health, 0),
+                "base_hp": hero.base_hp,
+                "attack": hero.attack,
+                "defense": hero.defense
+            } for hero in team_b]
+
+            queued_lineup.is_queued = False
+            db.session.commit()
+
+            return render_template(
+                "battle_result.html",
+                battle_result=result,
+                battle_log=raw_result.log,
+                team_a={
+                    "label": "Posted Lineup",
+                    "owner": queued_owner.username if queued_owner else "Unknown",
+                    "heroes": team_a_state
+                },
+                team_b={
+                    "label": "Challenger",
+                    "owner": current_user.username,
+                    "heroes": team_b_state
+                }
+            )
+
+    return render_template(
+        "arena.html",
+        user_heroes=roster,
+        available_heroes=roster,
+        queued_heroes=queued_heroes,
+        queued_owner=queued_owner.username if queued_owner else None,
+        challenger_heroes=roster
+    )
 
 @app.route('/add_heroes', methods=['GET', 'POST'])
 @login_required

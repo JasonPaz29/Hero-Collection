@@ -13,18 +13,23 @@
             <div class="homeL"><a href="{{ url_for('trade')}}">Trade</a></div>
             <div class="homeL"><a href="{{ url_for('dashboard')}}">Dashboard</a></div>
             <div class="homeL"><a href="{{ url_for('roll')}}">Roll</a></div>
+            <div class="homeL"><a href="{{ url_for('arena')}}">Arena</a></div>
             <div class="homeL"><a href="{{ url_for('achievements')}}">Achievements</a></div>
             <div class="homeL"><a href="{{ url_for('logout')}}">Log Out</a></div>
         </div>
-        <select class="mobile-dropdown" onchange="if(this.value) window.location.href=this.value;">
-            <option value="">Menu</option>
-            <option value="{{ url_for('home') }}">Home</option>
-            <option value="{{ url_for('trade') }}">Trade</option>
-            <option value="{{ url_for('dashboard') }}">Dashboard</option>
-            <option value="{{ url_for('roll') }}">Roll</option>
-            <option value="{{ url_for('achievements') }}">Achievements</option>
-            <option value="{{ url_for('logout') }}">Log Out</option>
-        </select>
+        <div class="mobile-menu">
+            <div class="mobile-tokens tokens">💰 {{ current_user.tokens }} Tokens</div>
+            <select class="mobile-dropdown" onchange="if(this.value) window.location.href=this.value;">
+                <option value="">Menu</option>
+                <option value="{{ url_for('home') }}">Home</option>
+                <option value="{{ url_for('trade') }}">Trade</option>
+                <option value="{{ url_for('dashboard') }}">Dashboard</option>
+                <option value="{{ url_for('roll') }}">Roll</option>
+                <option value="{{ url_for('arena') }}">Arena</option>
+                <option value="{{ url_for('achievements') }}">Achievements</option>
+                <option value="{{ url_for('logout') }}">Log Out</option>
+            </select>
+        </div>
 
     </div>
 </nav>

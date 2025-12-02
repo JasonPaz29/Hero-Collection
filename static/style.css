@@ -54,6 +54,14 @@ body {
     display: none;
 }
 
+.mobile-menu {
+    display: none;
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
 /* 📱 Mobile layout */
 @media (max-width: 768px) {
     .nav-links {
@@ -64,10 +72,22 @@ body {
         align-items: center;
     }
 
-    /* styled mobile dropdown */
+    .mobile-menu {
+        display: flex;
+    }
+
+    .mobile-tokens {
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.9rem;
+    }
+
     .mobile-dropdown {
         display: block;
-        width: 100%;
+        flex: 1;
+        min-width: 160px;
         max-width: 260px;
 
         padding: 0.65rem 0.9rem;

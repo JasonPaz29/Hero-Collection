@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Battle Result{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='arena.css') }}">
+
+<div class="arena-page">
+    <div class="arena-hero result-hero">
+        <div>
+            <p class="eyebrow">Battle Arena</p>
+            <h1>Battle Result</h1>
+            <p class="lede">Outcome of the queued lineup versus the challenger.</p>
+        </div>
+
+        {% if battle_result %}
+        <div class="result-tags">
+            <div class="badge">Winner: {{ battle_result.winner }}</div>
+            <div class="badge secondary">Loser: {{ battle_result.loser }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <section class="card result-card">
+        <div class="card-header">
+            <div>
+                <p class="eyebrow">Outcome</p>
+                {% if battle_result %}
+                    <h2>{{ battle_result.winner }} defeats {{ battle_result.loser }}</h2>
+                    <p class="eyebrow">The team will be revealed in a future update!</p>
+                {% else %}
+                    <h2>Battle completed</h2>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('arena') }}" class="btn ghost">Back to Arena</a>
+        </div>
+
+        {# Only show team breakdown if we actually have team_a/team_b data #}
+        {% if team_a and team_b %}
+        <div class="team-grid">
+            <div class="team-block">
+                <div class="team-header">
+                    <span class="tag">{{ team_a.label }}</span>
+                    <div class="muted">Owner: {{ team_a.owner }}</div>
+                </div>
+                <div class="hero-rows">
+                    {% for hero in team_a.heroes %}
+                    <div class="hero-row">
+                        <div>
+                            <div class="hero-name">{{ hero.name }}</div>
+                            <div class="hero-meta">
+                                <span class="tag">{{ hero.greek_type }}</span>
+                                <span class="stat-chip">ATK {{ hero.attack }}</span>
+                                <span class="stat-chip">DEF {{ hero.defense }}</span>
+                            </div>
+                        </div>
+                        <div class="hp-pill">HP {{ hero.base_hp }} / {{ hero.hp }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="team-block">
+                <div class="team-header">
+                    <span class="tag">{{ team_b.label }}</span>
+                    <div class="muted">Owner: {{ team_b.owner }}</div>
+                </div>
+                <div class="hero-rows">
+                    {% for hero in team_b.heroes %}
+                    <div class="hero-row">
+                        <div>
+                            <div class="hero-name">{{ hero.name }}</div>
+                            <div class="hero-meta">
+                                <span class="tag">{{ hero.greek_type }}</span>
+                                <span class="stat-chip">ATK {{ hero.attack }}</span>
+                                <span class="stat-chip">DEF {{ hero.defense }}</span>
+                            </div>
+                        </div>
+                        <div class="hp-pill">HP {{ hero.base_hp }} / {{ hero.hp }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="card log-card">
+        <div class="card-header">
+            <div>
+                <p class="eyebrow">Battle Log</p>
+                <h2>Turn-by-turn</h2>
+            </div>
+        </div>
+        <div class="battle-log">
+            {% if battle_log %}
+                {% for entry in battle_log %}
+                <div class="log-entry">{{ entry }}</div>
+                {% endfor %}
+            {% else %}
+                <div class="log-entry">No events recorded.</div>
+            {% endif %}
+        </div>
+        <div class="actions">
+            <a class="btn primary" href="{{ url_for('arena') }}">Return to Arena</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

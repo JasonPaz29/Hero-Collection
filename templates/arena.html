@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Battle Arena{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='arena.css') }}">
+
+{% set roster = available_heroes|default([], true) or user_heroes|default([], true) or team_a_heroes|default([], true) %}
+{% set queue_owner = queued_owner|default('') %}
+{% set queued = queued_heroes|default([], true) %}
+{% set challenger_pool = challenger_heroes|default([], true) or roster %}
+
+<div class="arena-page">
+    <div class="arena-hero">
+        <div>
+            <p class="eyebrow">Hero Collection V2</p>        
+            <h1>Battle Arena</h1>
+            <p class="lede">Lock in your trio, post your squad to the arena, and wait for a challenger—or step up and challenge a posted lineup.</p>
+        </div>
+        <div class="badge">Live Queue</div>
+    </div>
+
+    <div class="arena-grid">
+        <section class="card lineup-card">
+            <div class="card-header">
+                <div>
+                    <p class="eyebrow">Your Lineup</p>
+                    <h2>Send three heroes</h2>
+                </div>
+                <div class="hint">Team slots lock when you submit.</div>
+            </div>
+            <form class="lineup-form" method="POST" action="{{ url_for('arena') }}">
+                <input type="hidden" name="intent" value="queue">
+                <div class="slot-grid">
+                    <label class="slot">
+                        <span>Slot 1</span>
+                        <select name="team_a_hero1" required>
+                            <option value="" disabled selected>Select a hero</option>
+                            {% for hero in roster %}
+                            <option value="{{ hero.id }}">{{ hero.name }} ({{ hero.greek_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="slot">
+                        <span>Slot 2</span>
+                        <select name="team_a_hero2" required>
+                            <option value="" disabled selected>Select a hero</option>
+                            {% for hero in roster %}
+                            <option value="{{ hero.id }}">{{ hero.name }} ({{ hero.greek_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="slot">
+                        <span>Slot 3</span>
+                        <select name="team_a_hero3" required>
+                            <option value="" disabled selected>Select a hero</option>
+                            {% for hero in roster %}
+                            <option value="{{ hero.id }}">{{ hero.name }} ({{ hero.greek_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <button type="submit" class="btn primary">Send Team to Arena</button>
+            </form>
+
+            <div class="roster">
+                <div class="roster-header">
+                    <p class="eyebrow">Roster Preview</p>
+                    <span class="muted">Pick from your available heroes</span>
+                </div>
+                <div class="hero-list">
+                    {% for hero in roster %}
+                    <div class="hero-card">
+                        <div class="hero-name">{{ hero.name }}</div>
+                        <div class="hero-meta">
+                            <span class="tag">{{ hero.greek_type }}</span>
+                        </div>
+                        <div class="hero-stats">
+                            <span>ATK {{ hero.base_attack }}</span>
+                            <span>DEF {{ hero.base_defense }}</span>
+                            <span>HP {{ hero.base_hp }}</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty">No heroes available yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="card queue-card">
+            <div class="card-header">
+                <div>
+                    <p class="eyebrow">Awaiting Battle</p>
+                    <h2>Posted lineup</h2>
+                </div>
+                <div class="status">
+                    <span class="dot"></span>
+                    Waiting for challenger
+                </div>
+            </div>
+
+            {% if queued %}
+            <div class="queued-meta">
+                <p class="muted">Posted by {{ queue_owner or 'Unknown Heroic' }}</p>
+                <div class="queued-heroes">
+                    {% for hero in queued %}
+                    <div class="hero-pill">
+                        <div class="pill-name">{{ hero.name if hero.name is defined else hero }}</div>
+                        {% if hero.greek_type is defined %}
+                        <div class="pill-type">{{ hero.greek_type }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="empty queue-empty">
+                No lineup is queued. Send a team to set the arena.
+            </div>
+            {% endif %}
+
+            <div class="divider">Challenge this squad</div>
+            <form class="challenge-form" method="POST" action="{{ url_for('arena') }}">
+                <input type="hidden" name="intent" value="challenge">
+                <div class="slot-grid">
+                    <label class="slot">
+                        <span>Challenger Slot 1</span>
+                        <select name="team_b_hero1" required>
+                            <option value="" disabled selected>Select a hero</option>
+                            {% for hero in challenger_pool %}
+                            <option value="{{ hero.id }}">{{ hero.name }} ({{ hero.greek_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="slot">
+                        <span>Challenger Slot 2</span>
+                        <select name="team_b_hero2" required>
+                            <option value="" disabled selected>Select a hero</option>
+                            {% for hero in challenger_pool %}
+                            <option value="{{ hero.id }}">{{ hero.name }} ({{ hero.greek_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="slot">
+                        <span>Challenger Slot 3</span>
+                        <select name="team_b_hero3" required>
+                            <option value="" disabled selected>Select a hero</option>
+                            {% for hero in challenger_pool %}
+                            <option value="{{ hero.id }}">{{ hero.name }} ({{ hero.greek_type }})</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+                <button type="submit" class="btn ghost">Challenge lineup</button>
+            </form>
+        </section>
+    </div>
+
+    {% if battle_result %}
+    <section class="card result-card">
+        <div class="card-header">
+            <div>
+                <p class="eyebrow">Result</p>
+                <h2>Battle resolved</h2>
+            </div>
+            <div class="result-summary">
+                <div class="winner">Winner: {{ battle_result.winner }}</div>
+                <div class="loser">Loser: {{ battle_result.loser }}</div>
+            </div>
+        </div>
+        <div class="battle-log">
+            {% for entry in battle_log %}
+            <div class="log-entry">{{ entry }}</div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}    
+{% endblock %}
