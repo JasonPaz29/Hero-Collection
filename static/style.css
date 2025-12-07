@@ -1572,6 +1572,113 @@ footer {
     color: #999;
 }
 
+.v2-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 999;
+}
+
+.v2-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.v2-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(31, 27, 45, 0.45);
+    backdrop-filter: blur(4px);
+}
+
+.v2-modal__content {
+    position: relative;
+    max-width: 520px;
+    width: 100%;
+    background: linear-gradient(135deg, #fffdf7, #ffeecb);
+    border: 4px solid var(--ink);
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+    z-index: 1;
+    animation: v2-pop 0.35s ease;
+}
+
+.v2-modal__eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 900;
+    color: #5a556f;
+    margin-bottom: 0.25rem;
+}
+
+.v2-modal__content h2 {
+    margin-bottom: 0.75rem;
+    font-size: 1.6rem;
+    line-height: 1.2;
+}
+
+.v2-modal__list {
+    list-style: none;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-weight: 800;
+}
+
+.v2-modal__list li::before {
+    content: "• ";
+    color: #ef476f;
+    font-weight: 900;
+}
+
+.v2-modal__footer {
+    font-weight: 800;
+    color: #413f52;
+}
+
+.v2-modal__close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: #fff9f0;
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 1.15rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: var(--shadow-strong);
+    display: grid;
+    place-items: center;
+    line-height: 1;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.v2-modal__close:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 0 var(--ink);
+}
+
+.v2-modal__close:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-strong);
+}
+
+@keyframes v2-pop {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
 @media (max-width: 768px) {
     footer {
         padding: 1.5rem;

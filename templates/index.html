@@ -61,5 +61,62 @@
             </div>
         </div>
     </div>
+
+    <div class="v2-modal" id="v2Modal" aria-hidden="true">
+        <div class="v2-modal__overlay"></div>
+        <div class="v2-modal__content" role="dialog" aria-labelledby="v2ModalTitle">
+            <button class="v2-modal__close" aria-label="Close announcement">×</button>
+            <p class="v2-modal__eyebrow">Update</p>
+            <h2 id="v2ModalTitle">🔥 Hero Collection V2 is live!</h2>
+            <ul class="v2-modal__list">
+                <li>New Arena Battle System</li>
+                <li>Type Advantage + Synergy Combos</li>
+                <li>Full Battle Logs + Turn-by-Turn Damage</li>
+                <li>Queue Your Team to Be Challenged by Others</li>
+                <li>Earn Tokens Through Battles (Winners + Losers)</li>
+            </ul>
+            <p class="v2-modal__footer">Thank you for playing — V2 is just the beginning.<br>V2.5 coming early 2026</p>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const modal = document.getElementById('v2Modal');
+            if (!modal) return;
+
+            const closeButton = modal.querySelector('.v2-modal__close');
+            const overlay = modal.querySelector('.v2-modal__overlay');
+            const storageKey = 'heroCollectionV2PopupSeen';
+
+            const openModal = () => {
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+            };
+
+            const closeModal = () => {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                try {
+                    localStorage.setItem(storageKey, 'true');
+                } catch (err) {
+                    // ignore storage errors
+                }
+            };
+
+            let hasSeenPopup = false;
+            try {
+                hasSeenPopup = localStorage.getItem(storageKey) === 'true';
+            } catch (err) {
+                hasSeenPopup = false;
+            }
+
+            if (!hasSeenPopup) {
+                openModal();
+            }
+
+            closeButton?.addEventListener('click', closeModal);
+            overlay?.addEventListener('click', closeModal);
+        })();
+    </script>
 </body>
 </html>

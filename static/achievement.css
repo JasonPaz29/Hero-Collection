@@ -168,6 +168,37 @@
     border: 1px solid rgba(255,255,255,0.2);
 }
 
+.achievement-type {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.achievement-type:first-of-type {
+    border-top: none;
+    padding-top: 0;
+}
+
+.achievement-type-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.type-title {
+    font-size: 1.4rem;
+    color: #2c3e50;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.type-count {
+    font-size: 0.95rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
 .achievements-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

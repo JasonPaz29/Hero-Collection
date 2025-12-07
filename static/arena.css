@@ -34,6 +34,45 @@
     box-shadow: var(--arena-shadow);
 }
 
+.arena-hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.record-pill {
+    background: linear-gradient(135deg, #4cc9f0, #8b5cf6);
+    border: 4px solid var(--arena-ink);
+    border-radius: 16px;
+    padding: 10px 14px;
+    color: var(--arena-ink);
+    box-shadow: var(--shadow-strong, 0 10px 0 rgba(31, 27, 45, 0.18));
+    min-width: 150px;
+}
+
+.pill-label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #2d263b;
+    font-weight: 900;
+}
+
+.pill-value {
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.pill-sub {
+    font-size: 12px;
+    font-weight: 800;
+    color: #2d263b;
+}
+
 .arena-hero h1 {
     margin: 0;
     font-size: 32px;

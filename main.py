@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import random
 from datetime import timedelta, datetime
 import schedule
+from collections import defaultdict
 from battle_logic import simulate_battle, BattleResult
 
 app = Flask(__name__)
@@ -123,6 +124,16 @@ class CombatHero:
     def basehp(self):
         return self.base_hp
 
+def no_security_question_set():
+    users = User.query.all()
+    for user in users:
+        if not user.security_question or not user.security_answer_hash:
+            return render_template('set_security.html', user=user)
+        elif not user.battle_wins and not user.battle_losses:
+            user.battle_wins = 0
+            user.battle_losses = 0
+            db.session.commit()
+    return
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -273,11 +284,13 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    no_security_question_set()
     today = datetime.utcnow().date()
     last_claim = current_user.last_daily_claim.date()
     if today > last_claim:
         current_user.tokens += 25
         current_user.last_daily_claim = datetime.utcnow()
+        flash("You have claimed your daily 25 tokens!", "success")
         db.session.commit()
     user_heroes = current_user.heroes
     return render_template('dashboard.html', user_heroes=user_heroes)
@@ -551,16 +564,60 @@ def perform_roll():
 @app.route('/achievements')
 @login_required
 def achievements():
-    all_achievements = Achievement.query.all()
+    check_achievements()
+    all_achievements = Achievement.query.order_by(Achievement.type, Achievement.value, Achievement.id).all()
     user_achievements = current_user.achievements
-    user_achievement_ids = [a.id for a in user_achievements]
+    user_achievement_ids = {a.id for a in user_achievements}
+    achievements_by_type = defaultdict(list)
+
+    def current_value_for(achievement):
+        if achievement.type == "hero_collection":
+            return len(current_user.heroes)
+        if achievement.type == "roll_count":
+            return current_user.rolls_done
+        if achievement.type == "tokens_spent":
+            return current_user.tokens_spent
+        if achievement.type == "battle_wins":
+            return current_user.battle_wins
+        if achievement.type == "goku":
+            return 1 if any(hero.name == "Goku" for hero in current_user.heroes) else 0
+        if achievement.type == "creator":
+            return 1 if any(hero.name == "The Creator" for hero in current_user.heroes) else 0
+        return 0
+
+    for achievement in all_achievements:
+        is_unlocked = achievement.id in user_achievement_ids
+        target_value = achievement.value or 0
+        if achievement.type in ("goku", "creator") and target_value == 0:
+            target_value = 1
+
+        current_value = current_value_for(achievement)
+        progress_percent = 0
+        if target_value > 0:
+            progress_percent = int((current_value / target_value) * 100)
+        if progress_percent > 100:
+            progress_percent = 100
+        if is_unlocked:
+            progress_percent = 100
+
+        achievements_by_type[achievement.type].append({
+            "achievement": achievement,
+            "is_unlocked": is_unlocked,
+            "target_value": target_value,
+            "current_value": current_value,
+            "progress_percent": progress_percent
+        })
+
     newly_unlocked_achievements = []
+    ordered_types = sorted(achievements_by_type.keys())
     
     return render_template('achievement.html',
         all_achievements=all_achievements,
         user_achievements=user_achievements,
         user_achievement_ids=user_achievement_ids,
-        newly_unlocked_achievements=newly_unlocked_achievements
+        newly_unlocked_achievements=newly_unlocked_achievements,
+        achievements_by_type=achievements_by_type,
+        ordered_types=ordered_types
     )
 
 def check_achievements():
@@ -591,6 +648,14 @@ def check_achievements():
 
         elif achievement.type == "goku":
             if any(hero.name == "Goku" for hero in current_user.heroes):
+                unlock(achievement)
+        
+        elif achievement.type == "creator":
+            if any(hero.name == "The Creator" for hero in current_user.heroes):
+                unlock(achievement)
+        
+        elif achievement.type == "battle_wins":
+            if current_user.battle_wins >= achievement.value:
                 unlock(achievement)
 
     if obtained_any:
@@ -720,9 +785,13 @@ def arena():
             if winner_name == queued_owner.username:
                 queued_owner.battle_wins += 1
                 current_user.battle_losses += 1
+                queued_owner.tokens += 15
+                current_user.tokens += 5
             else:
                 current_user.battle_wins += 1
                 queued_owner.battle_losses += 1
+                queued_owner.tokens += 5
+                current_user.tokens += 15
 
             queued_lineup.last_battle_log = "\n".join(raw_result.log)
             queued_lineup.last_battle_winner = winner_name
@@ -772,7 +841,9 @@ def arena():
         available_heroes=roster,
         queued_heroes=queued_heroes,
         queued_owner=queued_owner.username if queued_owner else None,
-        challenger_heroes=roster
+        challenger_heroes=roster,
+        battle_wins=current_user.battle_wins,
+        battle_losses=current_user.battle_losses
     )
 
 @app.route('/add_heroes', methods=['GET', 'POST'])
@@ -855,4 +926,4 @@ def add_achievements():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=int("5000"), debug=True) 
+    app.run(host="0.0.0.0", port="5000", debug=True) 

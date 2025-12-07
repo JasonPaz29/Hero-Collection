@@ -33,104 +33,94 @@
     </div>
 
     <!-- Achievements Grid -->
+    {% set grouped_types = ordered_types | default([], true) %}
+    {% set grouped_achievements = achievements_by_type | default({}, true) %}
     <div class="achievements-section">
-        <div class="achievements-grid">
-            {% for achievement in all_achievements %}
-                {% set is_unlocked = achievement.id in user_achievement_ids %}
-                {% set target_value = achievement.value | int %}
-                {% if achievement.type == "goku" and target_value == 0 %}
-                    {% set target_value = 1 %}
-                {% endif %}
-                {% if achievement.type == "hero_collection" %}
-                    {% set current_value = current_user.heroes | length %}
-                {% elif achievement.type == "roll_count" %}
-                    {% set current_value = current_user.rolls_done %}
-                {% elif achievement.type == "tokens_spent" %}
-                    {% set current_value = current_user.tokens_spent %}
-                {% elif achievement.type == "goku" %}
-                    {% set current_value = 1 if current_user.heroes | selectattr('name', 'equalto', 'Goku') | list | length > 0 else 0 %}
-                {% else %}
-                    {% set current_value = 0 %}
-                {% endif %}
-                {% if target_value > 0 %}
-                    {% set progress_percent = (current_value / target_value * 100) | round(0, 'floor') %}
-                {% else %}
-                    {% set progress_percent = 0 %}
-                {% endif %}
-                {% if is_unlocked %}
-                    {% set progress_percent = 100 %}
-                {% elif progress_percent > 100 %}
-                    {% set progress_percent = 100 %}
-                {% endif %}
-
-                <div class="achievement-card {% if not is_unlocked %}locked{% endif %} difficulty-{{ achievement.difficulty.lower() }}" 
-                     data-difficulty="{{ achievement.difficulty.lower() }}" 
-                     data-status="{% if is_unlocked %}unlocked{% else %}locked{% endif %}">
-                    
-                    <!-- Achievement Icon -->
-                    <div class="achievement-icon">
-                        {% if is_unlocked %}
-                            <span class="trophy-icon">✅</span>
-                        {% else %}
-                            <span class="locked-icon">❌</span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Achievement Content -->
-                    <div class="achievement-content">
-                        <div class="achievement-name">
-                            {% if is_unlocked %}
-                                {{ achievement.name }}
-                            {% else %}
-                                <span class="hidden-text">???</span>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="achievement-description">
-                            {% if is_unlocked %}
-                                {{ achievement.description }}
-                            {% else %}
-                                <span class="hidden-description">Complete this achievement to unlock!</span>
-                            {% endif %}
-                        </div>
-                        
-                        
-                        <div class="achievement-difficulty difficulty-{{ achievement.difficulty.lower() }}">
-                            {{ achievement.difficulty }}
-                        </div>
-                    </div>
-                    
-                    <div class="achievement-progress">
-                        <div class="progress-meta">
-                            <span class="progress-label">{% if is_unlocked %}Completed{% else %}Progress{% endif %}</span>
-                            {% if target_value > 0 %}
-                                <span class="progress-count">{{ current_value }}/{{ target_value }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: {{ progress_percent }}%;"></div>
-                        </div>
-                    </div>
-
-                    <!-- Completion Status -->
-                    <div class="achievement-status">
-                        {% if is_unlocked %}
-                            <span class="status-completed">Completed</span>
-                        {% else %}
-                            <span class="status-locked">Locked</span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Unlock Animation Overlay -->
-                    {% if is_unlocked %}
-                        <div class="unlock-glow"></div>
-                    {% endif %}
+        {% for type_key in grouped_types %}
+            {% set type_label = type_key.replace('_', ' ')|title %}
+            <div class="achievement-type">
+                <div class="achievement-type-header">
+                    <h2 class="type-title">{{ type_label }}</h2>
+                    <span class="type-count">{{ grouped_achievements[type_key]|length }} achievements</span>
                 </div>
-            {% endfor %}
-        </div>
+                <div class="achievements-grid">
+                    {% for item in grouped_achievements[type_key] %}
+                        {% set achievement = item.achievement %}
+                        {% set is_unlocked = item.is_unlocked %}
+                        {% set target_value = item.target_value %}
+                        {% set current_value = item.current_value %}
+                        {% set progress_percent = item.progress_percent %}
+
+                        <div class="achievement-card {% if not is_unlocked %}locked{% endif %} difficulty-{{ achievement.difficulty|lower }}" 
+                             data-difficulty="{{ achievement.difficulty|lower }}" 
+                             data-status="{% if is_unlocked %}unlocked{% else %}locked{% endif %}">
+                            
+                            <!-- Achievement Icon -->
+                            <div class="achievement-icon">
+                                {% if is_unlocked %}
+                                    <span class="trophy-icon">✅</span>
+                                {% else %}
+                                    <span class="locked-icon">❌</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Achievement Content -->
+                            <div class="achievement-content">
+                                <div class="achievement-name">
+                                    {% if is_unlocked %}
+                                        {{ achievement.name }}
+                                    {% else %}
+                                        <span class="hidden-text">???</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="achievement-description">
+                                    {% if is_unlocked %}
+                                        {{ achievement.description }}
+                                    {% else %}
+                                        <span class="hidden-description">Complete this achievement to unlock!</span>
+                                    {% endif %}
+                                </div>
+                                
+                                
+                                <div class="achievement-difficulty difficulty-{{ achievement.difficulty|lower }}">
+                                    {{ achievement.difficulty }}
+                                </div>
+                            </div>
+                            
+                            <div class="achievement-progress">
+                                <div class="progress-meta">
+                                    <span class="progress-label">{% if is_unlocked %}Completed{% else %}Progress{% endif %}</span>
+                                    {% if target_value > 0 %}
+                                        <span class="progress-count">{{ current_value }}/{{ target_value }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ progress_percent }}%;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Completion Status -->
+                            <div class="achievement-status">
+                                {% if is_unlocked %}
+                                    <span class="status-completed">Completed</span>
+                                {% else %}
+                                    <span class="status-locked">Locked</span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Unlock Animation Overlay -->
+                            {% if is_unlocked %}
+                                <div class="unlock-glow"></div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
         
         <!-- Empty State -->
-        {% if not all_achievements %}
+        {% if not grouped_types %}
             <div class="empty-state">
                 <div class="empty-icon">✅</div>
                 <h3>No Achievements Yet</h3>

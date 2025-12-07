@@ -15,8 +15,16 @@
             <p class="eyebrow">Hero Collection V2</p>        
             <h1>Battle Arena</h1>
             <p class="lede">Lock in your trio, post your squad to the arena, and wait for a challenger—or step up and challenge a posted lineup.</p>
+            <p class="lede">Winners get 15 tokens! Losers get 5.</p>
         </div>
-        <div class="badge">Live Queue</div>
+        <div class="arena-hero-meta">
+            <div class="record-pill">
+                <span class="pill-label">Your Record</span>
+                <div class="pill-value">{{ battle_wins|default(0) }} - {{ battle_losses|default(0) }}</div>
+                <span class="pill-sub">Wins — Losses</span>
+            </div>
+            <div class="badge">Live Queue</div>
+        </div>
     </div>
 
     <div class="arena-grid">
